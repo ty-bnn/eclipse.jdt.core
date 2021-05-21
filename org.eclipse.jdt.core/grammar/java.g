@@ -1232,7 +1232,8 @@ InstanceofExpression ::= InstanceofExpression InstanceofRHS
 /:$readableName Expression:/
 
 InstanceofRHS -> InstanceofClassic
-InstanceofRHS -> InstanceofPattern
+InstanceofRHS -> InstanceofPrimaryTypePattern
+InstanceofRHS -> InstanceofPrimaryParenPattern
 /.$putCase consumeInstanceOfRHS(); $break ./
 /:$readableName Expression:/
 
@@ -1240,12 +1241,21 @@ InstanceofClassic ::= 'instanceof' Modifiersopt Type
 /.$putCase consumeInstanceOfClassic(); $break ./
 /:$readableName InstanceofClassic:/
 
-InstanceofPattern ::=  'instanceof' Pattern
-/.$putCase consumeInstanceofPattern(); $break ./
-/:$readableName InstanceofPattern:/
+InstanceofPrimaryTypePattern ::=  'instanceof' Modifiersopt Type 'Identifier'
+/.$putCase consumeInstanceofPrimaryTypePattern(); $break ./
+/:$readableName InstanceofPrimaryTypePattern:/
 
-Pattern -> TypePattern
+InstanceofPrimaryParenPattern ::=  'instanceof' '(' Pattern ')'
+/.$putCase consumeInstanceofPrimaryParenPattern(); $break ./
+/:$readableName InstanceofPrimaryParenPattern:/
+
+Pattern -> PrimaryPattern
 /:$readableName Pattern:/
+
+PrimaryPattern -> TypePattern
+PrimaryPattern ::= '(' Pattern ')'
+/.$putCase consumeInstanceofPrimaryPattern(); $break ./
+/:$readableName PrimaryPattern:/
 
 TypePattern ::= Modifiersopt Type 'Identifier' 
 /.$putCase consumeTypePattern(); $break ./
