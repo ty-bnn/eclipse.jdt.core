@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2024 Mateusz Matela and others.
+ * Copyright (c) 2014, 2018 Mateusz Matela and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,7 +15,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.formatter.linewrap;
 
-import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.TokenNameARROW;
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.TokenNameCOMMENT_BLOCK;
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.TokenNameCOMMENT_LINE;
 import static org.eclipse.jdt.internal.compiler.parser.TerminalTokens.TokenNameEQUAL;
@@ -36,7 +35,6 @@ import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
-import org.eclipse.jdt.core.dom.SwitchCase;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.internal.formatter.DefaultCodeFormatterOptions;
@@ -118,17 +116,6 @@ public class Aligner {
 			alignDeclarations(statements);
 		if (this.options.align_assignment_statements_on_columns)
 			alignAssignmentStatements(statements);
-	}
-
-	public void handleCaseStatementsAlign(List<Statement> statements) {
-		if (!this.options.align_arrows_in_switch_on_columns || areKeptOnOneLine(statements))
-			return;
-		List<List<ASTNode>> groups = toAlignGroups(statements, Optional::of);
-		AlignIndexFinder<ASTNode> arrowFinder = s ->
-			optionalCast(s, SwitchCase.class)
-				.filter(SwitchCase::isSwitchLabeledRule)
-				.map(s2 -> this.tm.lastIndexIn(s2, TokenNameARROW));
-		groups.forEach(g -> alignNodes(g, arrowFinder));
 	}
 
 	private boolean areKeptOnOneLine(List<? extends ASTNode> nodes) {
