@@ -1519,10 +1519,17 @@ class ASTConverter {
 	public CastExpression convert(org.eclipse.jdt.internal.compiler.ast.CastExpression expression) {
 		CastExpression castExpression = new CastExpression(this.ast);
 		castExpression.setSourceRange(expression.sourceStart, expression.sourceEnd - expression.sourceStart + 1);
-		TypeReference type = expression.type;
-		trimWhiteSpacesAndComments(type);
-		castExpression.setType(convertType(type));
-		castExpression.setExpression(convert(expression.expression));
+		org.eclipse.jdt.internal.compiler.ast.Expression exp = expression;
+		while (exp instanceof org.eclipse.jdt.internal.compiler.ast.CastExpression) {
+			org.eclipse.jdt.internal.compiler.ast.CastExpression castExp = (org.eclipse.jdt.internal.compiler.ast.CastExpression) exp;
+			TypeReference typeRef = castExp.type;
+			trimWhiteSpacesAndComments(typeRef);
+			Type type = convertType(typeRef);
+			type.setSourceRange(typeRef.sourceStart-1, typeRef.sourceEnd-typeRef.sourceStart+3);
+			castExpression.types().add(type);
+			exp = castExp.expression;
+		}
+		castExpression.setExpression(convert(exp));
 		if (this.resolveBindings) {
 			recordNodes(castExpression, expression);
 		}
