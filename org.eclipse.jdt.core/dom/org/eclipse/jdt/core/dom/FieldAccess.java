@@ -71,9 +71,17 @@ public class FieldAccess extends Expression {
 	/**
 	 * The "name" structural property of this node type (child type: {@link SimpleName}).
 	 * @since 3.0
+	 * @deprecated replaced by NAMES_PROPERTY.
 	 */
 	public static final ChildPropertyDescriptor NAME_PROPERTY =
 		new ChildPropertyDescriptor(FieldAccess.class, "name", SimpleName.class, MANDATORY, NO_CYCLE_RISK); //$NON-NLS-1$
+
+	/**
+	 * The "names" structural property of this node type (element type: {@link SimpleName}).
+	 * @since 3.40
+	 */
+	public static final ChildListPropertyDescriptor NAMES_PROPERTY =
+		new ChildListPropertyDescriptor(FieldAccess.class, "names", SimpleName.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * A list of property descriptors (element type:
@@ -86,7 +94,7 @@ public class FieldAccess extends Expression {
 		List properyList = new ArrayList(3);
 		createPropertyList(FieldAccess.class, properyList);
 		addProperty(EXPRESSION_PROPERTY, properyList);
-		addProperty(NAME_PROPERTY, properyList);
+		addProperty(NAMES_PROPERTY, properyList);
 		PROPERTY_DESCRIPTORS = reapPropertyList(properyList);
 	}
 
@@ -114,8 +122,11 @@ public class FieldAccess extends Expression {
 	/**
 	 * The field; lazily initialized; defaults to an unspecified,
 	 * but legal, simple field name.
+	 * @deprecated replaced by fieldNames.
 	 */
 	private volatile SimpleName fieldName;
+
+	private ASTNode.NodeList fieldNames = new ASTNode.NodeList(NAMES_PROPERTY);
 
 	/**
 	 * Creates a new unparented node for a field access expression owned by the
@@ -146,16 +157,17 @@ public class FieldAccess extends Expression {
 				return null;
 			}
 		}
-		if (property == NAME_PROPERTY) {
-			if (get) {
-				return getName();
-			} else {
-				setName((SimpleName) child);
-				return null;
-			}
-		}
 		// allow default implementation to flag the error
 		return super.internalGetSetChildProperty(property, get, child);
+	}
+
+	@Override
+	final List internalGetChildListProperty(ChildListPropertyDescriptor property) {
+		if (property == NAMES_PROPERTY) {
+			return fieldNames();
+		}
+		// allow default implementation to flag the error
+		return super.internalGetChildListProperty(property);
 	}
 
 	@Override
@@ -168,7 +180,7 @@ public class FieldAccess extends Expression {
 		FieldAccess result = new FieldAccess(target);
 		result.setSourceRange(getStartPosition(), getLength());
 		result.setExpression((Expression) getExpression().clone(target));
-		result.setName((SimpleName) getName().clone(target));
+		result.fieldNames().addAll(ASTNode.copySubtrees(target, fieldNames()));
 		return result;
 	}
 
@@ -184,7 +196,7 @@ public class FieldAccess extends Expression {
 		if (visitChildren) {
 			// visit children in normal left to right reading order
 			acceptChild(visitor, getExpression());
-			acceptChild(visitor, getName());
+			acceptChildren(visitor, this.fieldNames);
 		}
 		visitor.endVisit(this);
 	}
@@ -232,6 +244,7 @@ public class FieldAccess extends Expression {
 	 * Returns the name of the field accessed in this field access expression.
 	 *
 	 * @return the field name
+	 * @deprecated replaced by fieldNames.
 	 */
 	public SimpleName getName() {
 		if (this.fieldName == null) {
@@ -255,6 +268,7 @@ public class FieldAccess extends Expression {
 	 * <li>the node belongs to a different AST</li>
 	 * <li>the node already has a parent</li>
 	 * </ul>
+	 * @deprecated replaced by fieldNames.
 	 */
 	public void setName(SimpleName fieldName) {
 		if (fieldName == null) {
@@ -264,6 +278,17 @@ public class FieldAccess extends Expression {
 		preReplaceChild(oldChild, fieldName, NAME_PROPERTY);
 		this.fieldName = fieldName;
 		postReplaceChild(oldChild, fieldName, NAME_PROPERTY);
+	}
+
+	/**
+	 * Returns the live ordered list of field names.
+	 *
+	 * @return the live list of field names
+	 *    (element type: {@link SimpleName})
+	 * @since 3.40
+	 */
+	public List fieldNames() {
+		return this.fieldNames;
 	}
 
 	@Override
@@ -293,7 +318,7 @@ public class FieldAccess extends Expression {
 		return
 			memSize()
 			+ (this.expression == null ? 0 : getExpression().treeSize())
-			+ (this.fieldName == null ? 0 : getName().treeSize());
+			+ (this.fieldNames == null ? 0 : this.fieldNames.listSize());
 	}
 }
 

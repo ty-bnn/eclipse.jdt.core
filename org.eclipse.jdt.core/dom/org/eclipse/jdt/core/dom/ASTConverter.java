@@ -2176,17 +2176,26 @@ class ASTConverter {
 			if (this.resolveBindings) {
 				recordNodes(fieldAccess, reference);
 			}
-			Expression receiver = convert(reference.receiver);
-			fieldAccess.setExpression(receiver);
-			final SimpleName simpleName = new SimpleName(this.ast);
-			simpleName.internalSetIdentifier(new String(reference.token));
-			int sourceStart = (int)(reference.nameSourcePosition>>>32);
-			int length = (int)(reference.nameSourcePosition & 0xFFFFFFFF) - sourceStart + 1;
-			simpleName.setSourceRange(sourceStart, length);
-			fieldAccess.setName(simpleName);
-			if (this.resolveBindings) {
-				recordNodes(simpleName, reference);
+
+			List<Expression> names = new ArrayList<>();
+			org.eclipse.jdt.internal.compiler.ast.Expression exp = reference;
+			while (exp instanceof org.eclipse.jdt.internal.compiler.ast.FieldReference) {
+				org.eclipse.jdt.internal.compiler.ast.FieldReference ref = (org.eclipse.jdt.internal.compiler.ast.FieldReference) exp;
+				final SimpleName simpleName = new SimpleName(this.ast);
+				simpleName.internalSetIdentifier(new String(ref.token));
+				int sourceStart = (int)(ref.nameSourcePosition>>>32);
+				int length = (int)(ref.nameSourcePosition & 0xFFFFFFFF) - sourceStart + 1;
+				simpleName.setSourceRange(sourceStart, length);
+				if (this.resolveBindings) {
+					recordNodes(simpleName, reference);
+				}
+				names.add(simpleName);
+				exp = ref.receiver;
 			}
+			Collections.reverse(names);
+			fieldAccess.fieldNames().addAll(names);
+			Expression receiver = convert(exp);
+			fieldAccess.setExpression(convert(exp));
 			fieldAccess.setSourceRange(receiver.getStartPosition(), reference.sourceEnd - receiver.getStartPosition() + 1);
 			return fieldAccess;
 		}
