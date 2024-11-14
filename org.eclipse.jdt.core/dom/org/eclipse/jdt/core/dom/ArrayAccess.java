@@ -47,7 +47,7 @@ public class ArrayAccess extends Expression {
 		new ChildPropertyDescriptor(ArrayAccess.class, "index", Expression.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
 
 	/**
-	 * The "index" structural property of this node type (child type: {@link Expression}).
+	 * The "index" structural property of this node type (element type: {@link Expression}).
 	 * @since 3.40
 	 */
 	public static final ChildListPropertyDescriptor INDEXES_PROPERTY =
