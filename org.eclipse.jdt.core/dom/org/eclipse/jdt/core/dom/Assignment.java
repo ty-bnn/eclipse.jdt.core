@@ -155,6 +155,7 @@ public class Assignment extends Expression {
 	/**
 	 * The "leftHandSide" structural property of this node type (child type: {@link Expression}).
 	 * @since 3.0
+	 * @deprecated replaced by ELEMENTS_PROPERTY.
 	 */
 	public static final ChildPropertyDescriptor LEFT_HAND_SIDE_PROPERTY =
 		new ChildPropertyDescriptor(Assignment.class, "leftHandSide", Expression.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
@@ -162,6 +163,7 @@ public class Assignment extends Expression {
 	/**
 	 * The "operator" structural property of this node type (type: {@link Assignment.Operator}).
 	 * @since 3.0
+	 * @deprecated replaced by ELEMENTS_PROPERTY.
 	 */
 	public static final SimplePropertyDescriptor OPERATOR_PROPERTY =
 		new SimplePropertyDescriptor(Assignment.class, "operator", Assignment.Operator.class, MANDATORY); //$NON-NLS-1$
@@ -169,9 +171,16 @@ public class Assignment extends Expression {
 	/**
 	 * The "rightHandSide" structural property of this node type (child type: {@link Expression}).
 	 * @since 3.0
+	 * @deprecated replaced by ELEMENTS_PROPERTY.
 	 */
 	public static final ChildPropertyDescriptor RIGHT_HAND_SIDE_PROPERTY =
 		new ChildPropertyDescriptor(Assignment.class, "rightHandSide", Expression.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
+
+	/*
+	 * @since 3.40
+	 */
+	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(Assignment.class, "elements", ASTNode.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * A list of property descriptors (element type:
@@ -183,9 +192,7 @@ public class Assignment extends Expression {
 	static {
 		List properyList = new ArrayList(4);
 		createPropertyList(Assignment.class, properyList);
-		addProperty(LEFT_HAND_SIDE_PROPERTY, properyList);
-		addProperty(OPERATOR_PROPERTY, properyList);
-		addProperty(RIGHT_HAND_SIDE_PROPERTY, properyList);
+		addProperty(ELEMENTS_PROPERTY, properyList);
 		PROPERTY_DESCRIPTORS = reapPropertyList(properyList);
 	}
 
@@ -206,20 +213,25 @@ public class Assignment extends Expression {
 
 	/**
 	 * The assignment operator; defaults to Assignment.Operator.ASSIGN
+	 * @deprecated replaced by elements.
 	 */
 	private Assignment.Operator assignmentOperator = Assignment.Operator.ASSIGN;
 
 	/**
 	 * The left hand side; lazily initialized; defaults to an unspecified,
 	 * but legal, simple name.
+	 * @deprecated replaced by elements.
 	 */
 	private volatile Expression leftHandSide;
 
 	/**
 	 * The right hand side; lazily initialized; defaults to an unspecified,
 	 * but legal, simple name.
+	 * @deprecated replaced by elements.
 	 */
 	private volatile Expression rightHandSide;
+
+	private ASTNode.NodeList elements = new ASTNode.NodeList(ELEMENTS_PROPERTY);
 
 	/**
 	 * Creates a new AST node for an assignment expression owned by the given
@@ -238,39 +250,12 @@ public class Assignment extends Expression {
 	}
 
 	@Override
-	final Object internalGetSetObjectProperty(SimplePropertyDescriptor property, boolean get, Object value) {
-		if (property == OPERATOR_PROPERTY) {
-			if (get) {
-				return getOperator();
-			} else {
-				setOperator((Operator) value);
-				return null;
-			}
+	final List internalGetChildListProperty(ChildListPropertyDescriptor property) {
+		if (property == ELEMENTS_PROPERTY) {
+			return elements();
 		}
 		// allow default implementation to flag the error
-		return super.internalGetSetObjectProperty(property, get, value);
-	}
-
-	@Override
-	final ASTNode internalGetSetChildProperty(ChildPropertyDescriptor property, boolean get, ASTNode child) {
-		if (property == LEFT_HAND_SIDE_PROPERTY) {
-			if (get) {
-				return getLeftHandSide();
-			} else {
-				setLeftHandSide((Expression) child);
-				return null;
-			}
-		}
-		if (property == RIGHT_HAND_SIDE_PROPERTY) {
-			if (get) {
-				return getRightHandSide();
-			} else {
-				setRightHandSide((Expression) child);
-				return null;
-			}
-		}
-		// allow default implementation to flag the error
-		return super.internalGetSetChildProperty(property, get, child);
+		return super.internalGetChildListProperty(property);
 	}
 
 	@Override
@@ -282,9 +267,7 @@ public class Assignment extends Expression {
 	ASTNode clone0(AST target) {
 		Assignment result = new Assignment(target);
 		result.setSourceRange(getStartPosition(), getLength());
-		result.setOperator(getOperator());
-		result.setLeftHandSide((Expression) getLeftHandSide().clone(target));
-		result.setRightHandSide((Expression) getRightHandSide().clone(target));
+		result.elements().addAll(ASTNode.copySubtrees(target, elements()));
 		return result;
 	}
 
@@ -299,8 +282,7 @@ public class Assignment extends Expression {
 		boolean visitChildren = visitor.visit(this);
 		if (visitChildren) {
 			// visit children in normal left to right reading order
-			acceptChild(visitor, getLeftHandSide());
-			acceptChild(visitor, getRightHandSide());
+			acceptChildren(visitor, this.elements);
 		}
 		visitor.endVisit(this);
 	}
@@ -309,6 +291,7 @@ public class Assignment extends Expression {
 	 * Returns the operator of this assignment expression.
 	 *
 	 * @return the assignment operator
+	 * @deprecated replaced by elements.
 	 */
 	public Assignment.Operator getOperator() {
 		return this.assignmentOperator;
@@ -319,6 +302,7 @@ public class Assignment extends Expression {
 	 *
 	 * @param assignmentOperator the assignment operator
 	 * @exception IllegalArgumentException if the argument is incorrect
+	 * @deprecated replaced by elements.
 	 */
 	public void setOperator(Assignment.Operator assignmentOperator) {
 		if (assignmentOperator == null) {
@@ -333,6 +317,7 @@ public class Assignment extends Expression {
 	 * Returns the left hand side of this assignment expression.
 	 *
 	 * @return the left hand side node
+	 * @deprecated replaced by elements.
 	 */
 	public Expression getLeftHandSide() {
 		if (this.leftHandSide  == null) {
@@ -357,6 +342,7 @@ public class Assignment extends Expression {
 	 * <li>the node already has a parent</li>
 	 * <li>a cycle in would be created</li>
 	 * </ul>
+	 * @deprecated replaced by elements.
 	 */
 	public void setLeftHandSide(Expression expression) {
 		if (expression == null) {
@@ -373,6 +359,7 @@ public class Assignment extends Expression {
 	 * Returns the right hand side of this assignment expression.
 	 *
 	 * @return the right hand side node
+	 * @deprecated replaced by elements.
 	 */
 	public Expression getRightHandSide() {
 		if (this.rightHandSide  == null) {
@@ -397,6 +384,7 @@ public class Assignment extends Expression {
 	 * <li>the node already has a parent</li>
 	 * <li>a cycle in would be created</li>
 	 * </ul>
+	 * @deprecated replaced by elements.
 	 */
 	public void setRightHandSide(Expression expression) {
 		if (expression == null) {
@@ -409,6 +397,13 @@ public class Assignment extends Expression {
 		postReplaceChild(oldChild, expression, RIGHT_HAND_SIDE_PROPERTY);
 	}
 
+	/**
+	 * @since 3.40
+	 */
+	public List elements() {
+		return this.elements;
+	}
+
 	@Override
 	int memSize() {
 		// treat Code as free
@@ -419,8 +414,7 @@ public class Assignment extends Expression {
 	int treeSize() {
 		return
 			memSize()
-			+ (this.leftHandSide == null ? 0 : getLeftHandSide().treeSize())
-			+ (this.rightHandSide == null ? 0 : getRightHandSide().treeSize());
+			+ (this.elements == null ? 0 : this.elements.listSize());
 	}
 }
 
