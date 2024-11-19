@@ -2166,6 +2166,14 @@ public abstract class ASTVisitor {
 	}
 
 	/**
+	 * @param operator
+	 * @since 3.40
+	 */
+	public boolean visit(Operator operator) {
+		return true;
+	}
+
+	/**
 	 * End of visit the given type-specific AST node.
 	 * <p>
 	 * The default implementation does nothing. Subclasses may reimplement.
@@ -3629,6 +3637,13 @@ public abstract class ASTVisitor {
 	 * @since 3.38
 	 */
 	public void endVisit(ImplicitTypeDeclaration node) {
+		// default implementation: do nothing
+	}
+
+	/**
+	 * @since 3.40
+	 */
+	public void endVisit(Operator node) {
 		// default implementation: do nothing
 	}
 

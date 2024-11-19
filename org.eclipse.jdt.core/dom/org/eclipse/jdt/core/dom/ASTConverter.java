@@ -96,6 +96,8 @@ class ASTConverter {
 	protected boolean resolveBindings;
 	Scanner scanner;
 	private DefaultCommentMapper commentMapper;
+	private long sourceLevel;
+	private Map<String, String> options;
 
 	public ASTConverter(Map<String, String> options, boolean resolveBindings, IProgressMonitor monitor) {
 		this.resolveBindings = resolveBindings;
@@ -106,6 +108,8 @@ class ASTConverter {
 			// unknown sourceModeSetting
 			sourceLevel = ClassFileConstants.JDK1_3;
 		}
+		this.sourceLevel = sourceLevel;
+		this.options = options;
 		this.scanner = new Scanner(
 			true /*comment*/,
 			false /*whitespace*/,
@@ -1272,18 +1276,88 @@ class ASTConverter {
 
 	public Assignment convert(org.eclipse.jdt.internal.compiler.ast.Assignment expression) {
 		Assignment assignment = new Assignment(this.ast);
-		if (this.resolveBindings) {
-			recordNodes(assignment, expression);
-		}
-		Expression lhs = convert(expression.lhs);
-		assignment.setLeftHandSide(lhs);
-		assignment.setOperator(Assignment.Operator.ASSIGN);
-		Expression rightHandSide = convert(expression.expression);
-		assignment.setRightHandSide(rightHandSide);
-		int start = lhs.getStartPosition();
-		int end = rightHandSide.getStartPosition() + rightHandSide.getLength() - 1;
-		assignment.setSourceRange(start, end - start + 1);
+		assignment.setSourceRange(expression.sourceStart, expression.sourceEnd - expression.sourceStart + 1);
+		assignment.elements().addAll(getAssignments(expression));
+
 		return assignment;
+
+//		Assignment assignment = new Assignment(this.ast);
+//		if (this.resolveBindings) {
+//			recordNodes(assignment, expression);
+//		}
+//		Expression lhs = convert(expression.lhs);
+//		assignment.setLeftHandSide(lhs);
+//		assignment.setOperator(Assignment.Operator.ASSIGN);
+//		Expression rightHandSide = convert(expression.expression);
+//		assignment.setRightHandSide(rightHandSide);
+//		int start = lhs.getStartPosition();
+//		int end = rightHandSide.getStartPosition() + rightHandSide.getLength() - 1;
+//		assignment.setSourceRange(start, end - start + 1);
+//		return assignment;
+	}
+
+	private List getAssignments(org.eclipse.jdt.internal.compiler.ast.Expression expression) {
+		List<ASTNode> nodes = new ArrayList<>();
+
+		if (expression instanceof org.eclipse.jdt.internal.compiler.ast.CompoundAssignment) {
+			org.eclipse.jdt.internal.compiler.ast.CompoundAssignment assignment = (org.eclipse.jdt.internal.compiler.ast.CompoundAssignment) expression;
+			nodes.addAll(getAssignments(assignment.lhs));
+			Operator op = new Operator(this.ast);
+			op.setOperator(assignment.operatorToString());
+			PosAndLength pl = getOperatorPosAndLength(assignment.lhs.sourceEnd + 1, assignment.expression.sourceStart);
+			op.setSourceRange(pl.pos, pl.length);
+			nodes.add(op);
+			nodes.addAll(getAssignments(assignment.expression));
+
+			return nodes;
+		} else if (expression instanceof org.eclipse.jdt.internal.compiler.ast.Assignment) {
+			org.eclipse.jdt.internal.compiler.ast.Assignment assignment = (org.eclipse.jdt.internal.compiler.ast.Assignment) expression;
+			nodes.addAll(getAssignments(assignment.lhs));
+			Operator op = new Operator(this.ast);
+			op.setOperator("=");
+			PosAndLength pl = getOperatorPosAndLength(assignment.lhs.sourceEnd + 1, assignment.expression.sourceStart);
+			op.setSourceRange(pl.pos, pl.length);
+			nodes.add(op);
+			nodes.addAll(getAssignments(assignment.expression));
+
+			return nodes;
+		}
+
+		nodes.add(convert(expression));
+		return nodes;
+	}
+
+	private class PosAndLength {
+		public int pos;
+		public int length;
+
+		public PosAndLength(int pos, int length) {
+			this.pos = pos;
+			this.length = length;
+		}
+	}
+
+	private PosAndLength getOperatorPosAndLength(int start, int end) {
+		Scanner scanner = new Scanner(
+				true /*comment*/,
+				false /*whitespace*/,
+				false /*nls*/,
+				this.sourceLevel /*sourceLevel*/,
+				null /*taskTags*/,
+				null/*taskPriorities*/,
+				true/*taskCaseSensitive*/,
+				JavaCore.ENABLED.equals(this.options.get(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES)));
+		scanner.setSource(this.compilationUnitSource);
+		scanner.resetTo(start, end);
+		int pos = 0, length = 0;
+		try {
+			int token = scanner.getNextToken();
+			pos = scanner.getCurrentTokenStartPosition();
+			length = scanner.getCurrentTokenEndPosition() - pos + 1;
+		} catch (InvalidInputException e) {
+			// ignore
+        }
+		return new PosAndLength(pos, length);
 	}
 
 	public RecordDeclaration convertToRecord(org.eclipse.jdt.internal.compiler.ast.ASTNode[] nodes) {
@@ -1762,50 +1836,56 @@ class ASTConverter {
 
 	public Assignment convert(org.eclipse.jdt.internal.compiler.ast.CompoundAssignment expression) {
 		Assignment assignment = new Assignment(this.ast);
-		Expression lhs = convert(expression.lhs);
-		assignment.setLeftHandSide(lhs);
-		int start = lhs.getStartPosition();
-		assignment.setSourceRange(start, expression.sourceEnd - start + 1);
-		switch (expression.operator) {
-			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.PLUS :
-				assignment.setOperator(Assignment.Operator.PLUS_ASSIGN);
-				break;
-			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.MINUS :
-				assignment.setOperator(Assignment.Operator.MINUS_ASSIGN);
-				break;
-			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.MULTIPLY :
-				assignment.setOperator(Assignment.Operator.TIMES_ASSIGN);
-				break;
-			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.DIVIDE :
-				assignment.setOperator(Assignment.Operator.DIVIDE_ASSIGN);
-				break;
-			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.AND :
-				assignment.setOperator(Assignment.Operator.BIT_AND_ASSIGN);
-				break;
-			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.OR :
-				assignment.setOperator(Assignment.Operator.BIT_OR_ASSIGN);
-				break;
-			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.XOR :
-				assignment.setOperator(Assignment.Operator.BIT_XOR_ASSIGN);
-				break;
-			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.REMAINDER :
-				assignment.setOperator(Assignment.Operator.REMAINDER_ASSIGN);
-				break;
-			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.LEFT_SHIFT :
-				assignment.setOperator(Assignment.Operator.LEFT_SHIFT_ASSIGN);
-				break;
-			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.RIGHT_SHIFT :
-				assignment.setOperator(Assignment.Operator.RIGHT_SHIFT_SIGNED_ASSIGN);
-				break;
-			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.UNSIGNED_RIGHT_SHIFT :
-				assignment.setOperator(Assignment.Operator.RIGHT_SHIFT_UNSIGNED_ASSIGN);
-				break;
-		}
-		assignment.setRightHandSide(convert(expression.expression));
-		if (this.resolveBindings) {
-			recordNodes(assignment, expression);
-		}
+		assignment.setSourceRange(expression.sourceStart, expression.sourceEnd - expression.sourceStart + 1);
+		assignment.elements().addAll(getAssignments(expression));
+
 		return assignment;
+
+//		Assignment assignment = new Assignment(this.ast);
+//		Expression lhs = convert(expression.lhs);
+//		assignment.setLeftHandSide(lhs);
+//		int start = lhs.getStartPosition();
+//		assignment.setSourceRange(start, expression.sourceEnd - start + 1);
+//		switch (expression.operator) {
+//			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.PLUS :
+//				assignment.setOperator(Assignment.Operator.PLUS_ASSIGN);
+//				break;
+//			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.MINUS :
+//				assignment.setOperator(Assignment.Operator.MINUS_ASSIGN);
+//				break;
+//			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.MULTIPLY :
+//				assignment.setOperator(Assignment.Operator.TIMES_ASSIGN);
+//				break;
+//			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.DIVIDE :
+//				assignment.setOperator(Assignment.Operator.DIVIDE_ASSIGN);
+//				break;
+//			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.AND :
+//				assignment.setOperator(Assignment.Operator.BIT_AND_ASSIGN);
+//				break;
+//			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.OR :
+//				assignment.setOperator(Assignment.Operator.BIT_OR_ASSIGN);
+//				break;
+//			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.XOR :
+//				assignment.setOperator(Assignment.Operator.BIT_XOR_ASSIGN);
+//				break;
+//			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.REMAINDER :
+//				assignment.setOperator(Assignment.Operator.REMAINDER_ASSIGN);
+//				break;
+//			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.LEFT_SHIFT :
+//				assignment.setOperator(Assignment.Operator.LEFT_SHIFT_ASSIGN);
+//				break;
+//			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.RIGHT_SHIFT :
+//				assignment.setOperator(Assignment.Operator.RIGHT_SHIFT_SIGNED_ASSIGN);
+//				break;
+//			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.UNSIGNED_RIGHT_SHIFT :
+//				assignment.setOperator(Assignment.Operator.RIGHT_SHIFT_UNSIGNED_ASSIGN);
+//				break;
+//		}
+//		assignment.setRightHandSide(convert(expression.expression));
+//		if (this.resolveBindings) {
+//			recordNodes(assignment, expression);
+//		}
+//		return assignment;
 	}
 
 	public ConditionalExpression convert(org.eclipse.jdt.internal.compiler.ast.ConditionalExpression expression) {

@@ -3260,4 +3260,15 @@ public class ASTMatcher {
 				&& safeSubtreeListMatch(node.bodyDeclarations(), o.bodyDeclarations()));
 	}
 
+	/**
+	 * @since 3.40
+	 */
+	public boolean match(Operator node, Object other) {
+		if (!(other instanceof Operator)) {
+			return false;
+		}
+		Operator o = (Operator) other;
+		return node.getOperator().equals(o.getOperator());
+	}
+
 }

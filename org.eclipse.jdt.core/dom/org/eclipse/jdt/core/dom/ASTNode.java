@@ -1107,6 +1107,11 @@ public abstract class ASTNode {
 	public static final int UNNAMED_CLASS = 118;
 
 	/**
+	 * @since 3.40
+	 */
+	public static final int OPERATOR = 116;
+
+	/**
 	 * Returns the node class for the corresponding node type.
 	 *
 	 * @param nodeType AST node type
@@ -1354,6 +1359,8 @@ public abstract class ASTNode {
 				return EitherOrMultiPattern.class;
 			case UNNAMED_CLASS :
 				return ImplicitTypeDeclaration.class;
+			case OPERATOR :
+				return Operator.class;
 		}
 		throw new IllegalArgumentException();
 	}
