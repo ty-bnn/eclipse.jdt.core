@@ -1399,93 +1399,33 @@ class ASTConverter {
 
 	public Expression convert(org.eclipse.jdt.internal.compiler.ast.BinaryExpression expression) {
 		InfixExpression infixExpression = new InfixExpression(this.ast);
-		if (this.resolveBindings) {
-			this.recordNodes(infixExpression, expression);
-		}
+		infixExpression.setSourceRange(expression.sourceStart, expression.sourceEnd - expression.sourceStart + 1);
+		infixExpression.elements().addAll(getInfixExpressions(expression));
 
-		int expressionOperatorID = (expression.bits & org.eclipse.jdt.internal.compiler.ast.ASTNode.OperatorMASK) >> org.eclipse.jdt.internal.compiler.ast.ASTNode.OperatorSHIFT;
-		infixExpression.setOperator(getOperatorFor(expressionOperatorID));
-
-		if (expression.left instanceof org.eclipse.jdt.internal.compiler.ast.BinaryExpression
-				&& ((expression.left.bits & org.eclipse.jdt.internal.compiler.ast.ASTNode.ParenthesizedMASK) == 0)) {
-			// create an extended string literal equivalent => use the extended operands list
-			infixExpression.extendedOperands().add(convert(expression.right));
-			org.eclipse.jdt.internal.compiler.ast.Expression leftOperand = expression.left;
-			org.eclipse.jdt.internal.compiler.ast.Expression rightOperand = null;
-			do {
-				rightOperand = ((org.eclipse.jdt.internal.compiler.ast.BinaryExpression) leftOperand).right;
-				if ((((leftOperand.bits & org.eclipse.jdt.internal.compiler.ast.ASTNode.OperatorMASK) >> org.eclipse.jdt.internal.compiler.ast.ASTNode.OperatorSHIFT) != expressionOperatorID
-							&& ((leftOperand.bits & org.eclipse.jdt.internal.compiler.ast.ASTNode.ParenthesizedMASK) == 0))
-					 || ((rightOperand instanceof org.eclipse.jdt.internal.compiler.ast.BinaryExpression
-				 			&& ((rightOperand.bits & org.eclipse.jdt.internal.compiler.ast.ASTNode.OperatorMASK) >> org.eclipse.jdt.internal.compiler.ast.ASTNode.OperatorSHIFT) != expressionOperatorID)
-							&& ((rightOperand.bits & org.eclipse.jdt.internal.compiler.ast.ASTNode.ParenthesizedMASK) == 0))) {
-				 	List extendedOperands = infixExpression.extendedOperands();
-				 	InfixExpression temp = new InfixExpression(this.ast);
-					if (this.resolveBindings) {
-						this.recordNodes(temp, expression);
-					}
-				 	temp.setOperator(getOperatorFor(expressionOperatorID));
-				 	Expression leftSide = convert(leftOperand);
-					temp.setLeftOperand(leftSide);
-					temp.setSourceRange(leftSide.getStartPosition(), leftSide.getLength());
-					int size = extendedOperands.size();
-				 	for (int i = 0; i < size - 1; i++) {
-				 		Expression expr = temp;
-				 		temp = new InfixExpression(this.ast);
-
-						if (this.resolveBindings) {
-							this.recordNodes(temp, expression);
-						}
-				 		temp.setLeftOperand(expr);
-					 	temp.setOperator(getOperatorFor(expressionOperatorID));
-						temp.setSourceRange(expr.getStartPosition(), expr.getLength());
-				 	}
-				 	infixExpression = temp;
-				 	for (int i = 0; i < size; i++) {
-				 		Expression extendedOperand = (Expression) extendedOperands.remove(size - 1 - i);
-				 		temp.setRightOperand(extendedOperand);
-				 		int startPosition = temp.getLeftOperand().getStartPosition();
-				 		temp.setSourceRange(startPosition, extendedOperand.getStartPosition() + extendedOperand.getLength() - startPosition);
-				 		if (temp.getLeftOperand().getNodeType() == ASTNode.INFIX_EXPRESSION) {
-				 			temp = (InfixExpression) temp.getLeftOperand();
-				 		}
-				 	}
-					setInfixSourcePositions(infixExpression, infixExpression.getLeftOperand().getStartPosition());
-					if (this.resolveBindings) {
-						this.recordNodes(infixExpression, expression);
-					}
-					return infixExpression;
-				}
-				infixExpression.extendedOperands().add(0, convert(rightOperand));
-				leftOperand = ((org.eclipse.jdt.internal.compiler.ast.BinaryExpression) leftOperand).left;
-			} while (leftOperand instanceof org.eclipse.jdt.internal.compiler.ast.BinaryExpression && ((leftOperand.bits & org.eclipse.jdt.internal.compiler.ast.ASTNode.ParenthesizedMASK) == 0));
-			Expression leftExpression = convert(leftOperand);
-			infixExpression.setLeftOperand(leftExpression);
-			infixExpression.setRightOperand((Expression)infixExpression.extendedOperands().remove(0));
-			int startPosition = leftExpression.getStartPosition();
-			setInfixSourcePositions(infixExpression, startPosition);
-			return infixExpression;
-		} else if (expression.left instanceof StringLiteralConcatenation
-				&& ((expression.left.bits & org.eclipse.jdt.internal.compiler.ast.ASTNode.ParenthesizedMASK) == 0)
-				&& (OperatorIds.PLUS == expressionOperatorID)) {
-			StringLiteralConcatenation literal = (StringLiteralConcatenation) expression.left;
-			final org.eclipse.jdt.internal.compiler.ast.Expression[] stringLiterals = literal.getLiterals();
-			infixExpression.setLeftOperand(convert(stringLiterals[0]));
-			infixExpression.setRightOperand(convert(stringLiterals[1]));
-			for (int i = 2; i < stringLiterals.length; i++) {
-				infixExpression.extendedOperands().add(convert(stringLiterals[i]));
-			}
-			infixExpression.extendedOperands().add(convert(expression.right));
-			int startPosition = literal.sourceStart;
-			setInfixSourcePositions(infixExpression, startPosition);
-			return infixExpression;
-		}
-		Expression leftExpression = convert(expression.left);
-		infixExpression.setLeftOperand(leftExpression);
-		infixExpression.setRightOperand(convert(expression.right));
-		int startPosition = leftExpression.getStartPosition();
-		setInfixSourcePositions(infixExpression, startPosition);
 		return infixExpression;
+	}
+
+	private List getInfixExpressions(org.eclipse.jdt.internal.compiler.ast.Expression expression) {
+		List<ASTNode> nodes = new ArrayList<>();
+
+		if ((expression.bits & org.eclipse.jdt.internal.compiler.ast.ASTNode.ParenthesizedMASK) != 0) {
+			nodes.add(convertToParenthesizedExpression(expression));
+			return nodes;
+		} else if (expression instanceof org.eclipse.jdt.internal.compiler.ast.BinaryExpression) {
+			org.eclipse.jdt.internal.compiler.ast.BinaryExpression binaryExpression = (org.eclipse.jdt.internal.compiler.ast.BinaryExpression) expression;
+			nodes.addAll(getInfixExpressions(binaryExpression.left));
+			Operator op = new Operator(this.ast);
+			op.setOperator(binaryExpression.operatorToString());
+			PosAndLength pl = getOperatorPosAndLength(binaryExpression.left.sourceEnd + 1, binaryExpression.right.sourceStart);
+			op.setSourceRange(pl.pos, pl.length);
+			nodes.add(op);
+			nodes.addAll(getInfixExpressions(binaryExpression.right));
+
+			return nodes;
+		}
+
+		nodes.add(convert(expression));
+		return nodes;
 	}
 
 	public Block convert(org.eclipse.jdt.internal.compiler.ast.Block statement) {
@@ -2165,15 +2105,15 @@ class ASTConverter {
 		if (expression instanceof org.eclipse.jdt.internal.compiler.ast.StringLiteral) {
 			return convert((org.eclipse.jdt.internal.compiler.ast.StringLiteral) expression);
 		}
-		if (expression instanceof org.eclipse.jdt.internal.compiler.ast.AND_AND_Expression) {
-			return convert((org.eclipse.jdt.internal.compiler.ast.AND_AND_Expression) expression);
-		}
-		if (expression instanceof org.eclipse.jdt.internal.compiler.ast.OR_OR_Expression) {
-			return convert((org.eclipse.jdt.internal.compiler.ast.OR_OR_Expression) expression);
-		}
-		if (expression instanceof org.eclipse.jdt.internal.compiler.ast.EqualExpression) {
-			return convert((org.eclipse.jdt.internal.compiler.ast.EqualExpression) expression);
-		}
+//		if (expression instanceof org.eclipse.jdt.internal.compiler.ast.AND_AND_Expression) {
+//			return convert((org.eclipse.jdt.internal.compiler.ast.AND_AND_Expression) expression);
+//		}
+//		if (expression instanceof org.eclipse.jdt.internal.compiler.ast.OR_OR_Expression) {
+//			return convert((org.eclipse.jdt.internal.compiler.ast.OR_OR_Expression) expression);
+//		}
+//		if (expression instanceof org.eclipse.jdt.internal.compiler.ast.EqualExpression) {
+//			return convert((org.eclipse.jdt.internal.compiler.ast.EqualExpression) expression);
+//		}
 		if (expression instanceof org.eclipse.jdt.internal.compiler.ast.BinaryExpression) {
 			return convert((org.eclipse.jdt.internal.compiler.ast.BinaryExpression) expression);
 		}
@@ -2810,12 +2750,14 @@ class ASTConverter {
 	public InfixExpression convert(StringLiteralConcatenation expression) {
 		expression.computeConstant();
 		final InfixExpression infixExpression = new InfixExpression(this.ast);
-		infixExpression.setOperator(InfixExpression.Operator.PLUS);
 		org.eclipse.jdt.internal.compiler.ast.Expression[] stringLiterals = expression.getLiterals();
-		infixExpression.setLeftOperand(convert(stringLiterals[0]));
-		infixExpression.setRightOperand(convert(stringLiterals[1]));
-		for (int i = 2; i < stringLiterals.length; i++) {
-			infixExpression.extendedOperands().add(convert(stringLiterals[i]));
+		infixExpression.elements().add(convert(stringLiterals[0]));
+		for (int i = 1; i < stringLiterals.length; i++) {
+			Operator op = new Operator(this.ast);
+			op.setOperator("+");
+			infixExpression.elements().add(op);
+			getOperatorPosAndLength(stringLiterals[i-1].sourceEnd + 1, stringLiterals[i].sourceStart);
+			infixExpression.elements().add(convert(stringLiterals[i]));
 		}
 		if (this.resolveBindings) {
 			this.recordNodes(infixExpression, expression);
