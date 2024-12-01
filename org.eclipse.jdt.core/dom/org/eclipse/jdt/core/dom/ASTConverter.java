@@ -17,7 +17,6 @@
 package org.eclipse.jdt.core.dom;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1235,18 +1234,8 @@ class ASTConverter {
 			recordNodes(arrayAccess, reference);
 		}
 		arrayAccess.setSourceRange(reference.sourceStart, reference.sourceEnd - reference.sourceStart + 1);
-
-		List<Expression> indexes = new ArrayList<>();
-		indexes.add(convert(reference.position));
-		org.eclipse.jdt.internal.compiler.ast.Expression receiver = reference.receiver;
-		while (receiver instanceof org.eclipse.jdt.internal.compiler.ast.ArrayReference) {
-			org.eclipse.jdt.internal.compiler.ast.ArrayReference receiverCast = (org.eclipse.jdt.internal.compiler.ast.ArrayReference)receiver;
-			indexes.add(convert(receiverCast.position));
-			receiver = receiverCast.receiver;
-		}
-		Collections.reverse(indexes);
-		arrayAccess.indexExpressions().addAll(indexes);
-		arrayAccess.setArray(convert(receiver));
+		arrayAccess.setArray(convert(reference.receiver));
+		arrayAccess.setIndex(convert(reference.position));
 		return arrayAccess;
 	}
 
