@@ -1107,9 +1107,9 @@ public abstract class ASTNode {
 	public static final int UNNAMED_CLASS = 118;
 
 	/**
-	 * @since 3.40
+	 * @since 3.39
 	 */
-	public static final int OPERATOR = 116;
+	public static final int OPERATOR = 119;
 
 	/**
 	 * Returns the node class for the corresponding node type.

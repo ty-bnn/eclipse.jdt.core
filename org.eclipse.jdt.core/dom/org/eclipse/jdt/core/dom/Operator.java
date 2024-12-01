@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @since 3.40
+ * @since 3.39
  */
 @SuppressWarnings("rawtypes")
 public class Operator extends ASTNode {
