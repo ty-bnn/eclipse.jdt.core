@@ -1237,17 +1237,20 @@ class ASTConverter {
 		arrayAccess.setSourceRange(reference.sourceStart, reference.sourceEnd - reference.sourceStart + 1);
 
 		List<Expression> indexes = new ArrayList<>();
-		org.eclipse.jdt.internal.compiler.ast.Expression refExp = reference;
-		while (refExp instanceof org.eclipse.jdt.internal.compiler.ast.ArrayReference) {
-			org.eclipse.jdt.internal.compiler.ast.ArrayReference ref = (org.eclipse.jdt.internal.compiler.ast.ArrayReference)refExp;
-			Expression indexExp = convert(ref.position);
-			indexExp.setSourceRange(ref.position.sourceStart-1, ref.position.sourceEnd - ref.position.sourceStart + 3);
-			indexes.add(indexExp);
-			refExp = ref.receiver;
+		reference.position.sourceStart--;
+		reference.position.sourceEnd++;
+		indexes.add(convert(reference.position));
+		org.eclipse.jdt.internal.compiler.ast.Expression receiver = reference.receiver;
+		while (receiver instanceof org.eclipse.jdt.internal.compiler.ast.ArrayReference) {
+			org.eclipse.jdt.internal.compiler.ast.ArrayReference receiverCast = (org.eclipse.jdt.internal.compiler.ast.ArrayReference)receiver;
+			receiverCast.position.sourceStart--;
+			receiverCast.position.sourceEnd++;
+			indexes.add(convert(receiverCast.position));
+			receiver = receiverCast.receiver;
 		}
 		Collections.reverse(indexes);
 		arrayAccess.indexExpressions().addAll(indexes);
-		arrayAccess.setArray(convert(refExp));
+		arrayAccess.setArray(convert(receiver));
 		return arrayAccess;
 	}
 
