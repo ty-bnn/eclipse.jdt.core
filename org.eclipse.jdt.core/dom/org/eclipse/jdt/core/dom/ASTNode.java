@@ -1112,6 +1112,11 @@ public abstract class ASTNode {
 	public static final int OPERATOR = 119;
 
 	/**
+	 * @since 3.39
+	 */
+	public static final int EXPRESSION2 = 120;
+
+	/**
 	 * Returns the node class for the corresponding node type.
 	 *
 	 * @param nodeType AST node type
@@ -1361,6 +1366,8 @@ public abstract class ASTNode {
 				return ImplicitTypeDeclaration.class;
 			case OPERATOR :
 				return Operator.class;
+			case EXPRESSION2 :
+				return Expression2.class;
 		}
 		throw new IllegalArgumentException();
 	}

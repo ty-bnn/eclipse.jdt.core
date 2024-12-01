@@ -3261,7 +3261,7 @@ public class ASTMatcher {
 	}
 
 	/**
-	 * @since 3.40
+	 * @since 3.39
 	 */
 	public boolean match(Operator node, Object other) {
 		if (!(other instanceof Operator)) {
@@ -3269,6 +3269,14 @@ public class ASTMatcher {
 		}
 		Operator o = (Operator) other;
 		return node.getOperator().equals(o.getOperator());
+	}
+
+	/**
+	 * @since 3.39
+	 * TODO: if something went wrong, implement all nodes matcher which I made changes. Like ArrayAccess...
+	 */
+	public boolean match(Expression2 node, Object other) {
+		return true;
 	}
 
 }

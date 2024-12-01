@@ -2167,9 +2167,16 @@ public abstract class ASTVisitor {
 
 	/**
 	 * @param operator
-	 * @since 3.40
+	 * @since 3.39
 	 */
 	public boolean visit(Operator operator) {
+		return true;
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public boolean visit(Expression2 expression) {
 		return true;
 	}
 
@@ -3641,10 +3648,16 @@ public abstract class ASTVisitor {
 	}
 
 	/**
-	 * @since 3.40
+	 * @since 3.39
 	 */
 	public void endVisit(Operator node) {
 		// default implementation: do nothing
 	}
 
+	/**
+	 * @since 3.39
+	 */
+	public void endVisit(Expression2 node) {
+		// default implementation: do nothing
+	}
 }
