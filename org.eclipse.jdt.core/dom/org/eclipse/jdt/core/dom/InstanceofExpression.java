@@ -33,9 +33,16 @@ public class InstanceofExpression extends Expression {
 	/**
 	 * The "leftOperand" structural property of this node type (child type: {@link Expression}).
 	 * @since 3.0
+	 * @deprecated replaced by ELEMENTS_PROPERTY.
 	 */
 	public static final ChildPropertyDescriptor LEFT_OPERAND_PROPERTY =
 		new ChildPropertyDescriptor(InstanceofExpression.class, "leftOperand", Expression.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
+
+	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(InstanceofExpression.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * The "rightOperand" structural property of this node type (child type: {@link Type}).
@@ -54,7 +61,7 @@ public class InstanceofExpression extends Expression {
 	static {
 		List properyList = new ArrayList(3);
 		createPropertyList(InstanceofExpression.class, properyList);
-		addProperty(LEFT_OPERAND_PROPERTY, properyList);
+		addProperty(ELEMENTS_PROPERTY, properyList);
 		addProperty(RIGHT_OPERAND_PROPERTY, properyList);
 		PROPERTY_DESCRIPTORS = reapPropertyList(properyList);
 	}
@@ -77,8 +84,14 @@ public class InstanceofExpression extends Expression {
 	/**
 	 * The left operand; lazily initialized; defaults to an unspecified,
 	 * but legal, simple name.
+	 * @deprecated replaced by elements.
 	 */
 	private volatile Expression leftOperand;
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList elements = new ASTNode.NodeList(ELEMENTS_PROPERTY);
 
 	/**
 	 * The right operand; lazily initialized; defaults to an unspecified,
@@ -104,14 +117,6 @@ public class InstanceofExpression extends Expression {
 
 	@Override
 	final ASTNode internalGetSetChildProperty(ChildPropertyDescriptor property, boolean get, ASTNode child) {
-		if (property == LEFT_OPERAND_PROPERTY) {
-			if (get) {
-				return getLeftOperand();
-			} else {
-				setLeftOperand((Expression) child);
-				return null;
-			}
-		}
 		if (property == RIGHT_OPERAND_PROPERTY) {
 			if (get) {
 				return getRightOperand();
@@ -125,6 +130,15 @@ public class InstanceofExpression extends Expression {
 	}
 
 	@Override
+	final List internalGetChildListProperty(ChildListPropertyDescriptor property) {
+		if (property == ELEMENTS_PROPERTY) {
+			return elements();
+		}
+		// allow default implementation to flag the error
+		return super.internalGetChildListProperty(property);
+	}
+
+	@Override
 	final int getNodeType0() {
 		return INSTANCEOF_EXPRESSION;
 	}
@@ -133,7 +147,7 @@ public class InstanceofExpression extends Expression {
 	ASTNode clone0(AST target) {
 		InstanceofExpression result = new InstanceofExpression(target);
 		result.setSourceRange(getStartPosition(), getLength());
-		result.setLeftOperand((Expression) getLeftOperand().clone(target));
+		result.elements().addAll(ASTNode.copySubtrees(target, elements()));
 		result.setRightOperand((Type) getRightOperand().clone(target));
 		return result;
 	}
@@ -149,7 +163,7 @@ public class InstanceofExpression extends Expression {
 		boolean visitChildren = visitor.visit(this);
 		if (visitChildren) {
 			// visit children in normal left to right reading order
-			acceptChild(visitor, getLeftOperand());
+			acceptChildren(visitor, this.elements);
 			acceptChild(visitor, getRightOperand());
 		}
 		visitor.endVisit(this);
@@ -159,6 +173,7 @@ public class InstanceofExpression extends Expression {
 	 * Returns the left operand of this instanceof expression.
 	 *
 	 * @return the left operand node
+	 * @deprecated replaced by elements.
 	 */
 	public Expression getLeftOperand() {
 		if (this.leftOperand  == null) {
@@ -183,6 +198,7 @@ public class InstanceofExpression extends Expression {
 	 * <li>the node already has a parent</li>
 	 * <li>a cycle in would be created</li>
 	 * </ul>
+	 * @deprecated replaced by elements.
 	 */
 	public void setLeftOperand(Expression expression) {
 		if (expression == null) {
@@ -192,6 +208,13 @@ public class InstanceofExpression extends Expression {
 		preReplaceChild(oldChild, expression, LEFT_OPERAND_PROPERTY);
 		this.leftOperand = expression;
 		postReplaceChild(oldChild, expression, LEFT_OPERAND_PROPERTY);
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public List elements() {
+		return this.elements;
 	}
 
 	/**
@@ -243,7 +266,7 @@ public class InstanceofExpression extends Expression {
 	int treeSize() {
 		return
 			memSize()
-			+ (this.leftOperand == null ? 0 : getLeftOperand().treeSize())
+			+ (this.elements == null ? 0 : this.elements.listSize())
 			+ (this.rightOperand == null ? 0 : getRightOperand().treeSize());
 	}
 }

@@ -64,9 +64,16 @@ public class FieldAccess extends Expression {
 	/**
 	 * The "expression" structural property of this node type (child type: {@link Expression}).
 	 * @since 3.0
+	 * @deprecated replaced by ELEMENTS_PROPERTY.
 	 */
 	public static final ChildPropertyDescriptor EXPRESSION_PROPERTY =
 		new ChildPropertyDescriptor(FieldAccess.class, "expression", Expression.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
+
+	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(FieldAccess.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * The "name" structural property of this node type (child type: {@link SimpleName}).
@@ -85,7 +92,7 @@ public class FieldAccess extends Expression {
 	static {
 		List properyList = new ArrayList(3);
 		createPropertyList(FieldAccess.class, properyList);
-		addProperty(EXPRESSION_PROPERTY, properyList);
+		addProperty(ELEMENTS_PROPERTY, properyList);
 		addProperty(NAME_PROPERTY, properyList);
 		PROPERTY_DESCRIPTORS = reapPropertyList(properyList);
 	}
@@ -108,8 +115,14 @@ public class FieldAccess extends Expression {
 	/**
 	 * The expression; lazily initialized; defaults to an unspecified,
 	 * but legal, simple name.
+	 * @deprecated replaced by elements.
 	 */
 	private volatile Expression expression;
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList elements = new ASTNode.NodeList(ELEMENTS_PROPERTY);
 
 	/**
 	 * The field; lazily initialized; defaults to an unspecified,
@@ -138,14 +151,6 @@ public class FieldAccess extends Expression {
 
 	@Override
 	final ASTNode internalGetSetChildProperty(ChildPropertyDescriptor property, boolean get, ASTNode child) {
-		if (property == EXPRESSION_PROPERTY) {
-			if (get) {
-				return getExpression();
-			} else {
-				setExpression((Expression) child);
-				return null;
-			}
-		}
 		if (property == NAME_PROPERTY) {
 			if (get) {
 				return getName();
@@ -159,6 +164,15 @@ public class FieldAccess extends Expression {
 	}
 
 	@Override
+	final List internalGetChildListProperty(ChildListPropertyDescriptor property) {
+		if (property == ELEMENTS_PROPERTY) {
+			return elements();
+		}
+		// allow default implementation to flag the error
+		return super.internalGetChildListProperty(property);
+	}
+
+	@Override
 	final int getNodeType0() {
 		return FIELD_ACCESS;
 	}
@@ -167,7 +181,7 @@ public class FieldAccess extends Expression {
 	ASTNode clone0(AST target) {
 		FieldAccess result = new FieldAccess(target);
 		result.setSourceRange(getStartPosition(), getLength());
-		result.setExpression((Expression) getExpression().clone(target));
+		result.elements().addAll(ASTNode.copySubtrees(target, elements()));
 		result.setName((SimpleName) getName().clone(target));
 		return result;
 	}
@@ -183,7 +197,7 @@ public class FieldAccess extends Expression {
 		boolean visitChildren = visitor.visit(this);
 		if (visitChildren) {
 			// visit children in normal left to right reading order
-			acceptChild(visitor, getExpression());
+			acceptChildren(visitor, this.elements);
 			acceptChild(visitor, getName());
 		}
 		visitor.endVisit(this);
@@ -193,6 +207,7 @@ public class FieldAccess extends Expression {
 	 * Returns the expression of this field access expression.
 	 *
 	 * @return the expression node
+	 * @deprecated replaced by elements.
 	 */
 	public Expression getExpression() {
 		if (this.expression == null) {
@@ -217,6 +232,7 @@ public class FieldAccess extends Expression {
 	 * <li>the node already has a parent</li>
 	 * <li>a cycle in would be created</li>
 	 * </ul>
+	 * @deprecated replaced by elements.
 	 */
 	public void setExpression(Expression expression) {
 		if (expression == null) {
@@ -226,6 +242,13 @@ public class FieldAccess extends Expression {
 		preReplaceChild(oldChild, expression, EXPRESSION_PROPERTY);
 		this.expression = expression;
 		postReplaceChild(oldChild, expression, EXPRESSION_PROPERTY);
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public List elements() {
+		return this.elements;
 	}
 
 	/**
@@ -292,7 +315,7 @@ public class FieldAccess extends Expression {
 	int treeSize() {
 		return
 			memSize()
-			+ (this.expression == null ? 0 : getExpression().treeSize())
+			+ (this.elements == null ? 0 : this.elements.listSize())
 			+ (this.fieldName == null ? 0 : getName().treeSize());
 	}
 }

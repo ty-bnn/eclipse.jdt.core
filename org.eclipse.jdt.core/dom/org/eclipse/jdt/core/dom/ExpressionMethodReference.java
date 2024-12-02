@@ -33,9 +33,17 @@ public class ExpressionMethodReference extends MethodReference {
 
 	/**
 	 * The "expression" structural property of this node type (child type: {@link Expression}).
+	 * @deprecated replaced by ELEMENTS_PROPERTY.
 	 */
 	public static final ChildPropertyDescriptor EXPRESSION_PROPERTY =
 		new ChildPropertyDescriptor(ExpressionMethodReference.class, "expression", Expression.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
+
+	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(ExpressionMethodReference.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
+
 
 	/**
 	 * The "typeArguments" structural property of this node type (element type: {@link Type})
@@ -59,7 +67,7 @@ public class ExpressionMethodReference extends MethodReference {
 	static {
 		List propertyList = new ArrayList(4);
 		createPropertyList(ExpressionMethodReference.class, propertyList);
-		addProperty(EXPRESSION_PROPERTY, propertyList);
+		addProperty(ELEMENTS_PROPERTY, propertyList);
 		addProperty(TYPE_ARGUMENTS_PROPERTY, propertyList);
 		addProperty(NAME_PROPERTY, propertyList);
 		PROPERTY_DESCRIPTORS_8_0 = reapPropertyList(propertyList);
@@ -80,8 +88,14 @@ public class ExpressionMethodReference extends MethodReference {
 	/**
 	 * The expression; lazily initialized; defaults to an unspecified,
 	 * legal expression.
+	 * @deprecated replaced by elements.
 	 */
 	private volatile Expression expression;
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList elements = new ASTNode.NodeList(ELEMENTS_PROPERTY);
 
 	/**
 	 * The method name; lazily initialized; defaults to an unspecified,
@@ -125,20 +139,15 @@ public class ExpressionMethodReference extends MethodReference {
 				return null;
 			}
 		}
-		if (property == EXPRESSION_PROPERTY) {
-			if (get) {
-				return getExpression();
-			} else {
-				setExpression((Expression) child);
-				return null;
-			}
-		}
 		// allow default implementation to flag the error
 		return super.internalGetSetChildProperty(property, get, child);
 	}
 
 	@Override
 	final List internalGetChildListProperty(ChildListPropertyDescriptor property) {
+		if (property == ELEMENTS_PROPERTY) {
+			return elements();
+		}
 		if (property == TYPE_ARGUMENTS_PROPERTY) {
 			return typeArguments();
 		}
@@ -155,8 +164,7 @@ public class ExpressionMethodReference extends MethodReference {
 	ASTNode clone0(AST target) {
 		ExpressionMethodReference result = new ExpressionMethodReference(target);
 		result.setSourceRange(getStartPosition(), getLength());
-		result.setExpression(
-			(Expression) ASTNode.copySubtree(target, getExpression()));
+		result.elements().addAll(ASTNode.copySubtrees(target, elements()));
 		result.typeArguments().addAll(ASTNode.copySubtrees(target, typeArguments()));
 		result.setName((SimpleName) getName().clone(target));
 		return result;
@@ -174,7 +182,7 @@ public class ExpressionMethodReference extends MethodReference {
 		if (visitChildren) {
 			// visit children in normal left to right reading order
 			acceptChild(visitor, getExpression());
-			acceptChildren(visitor, this.typeArguments);
+			acceptChildren(visitor, this.elements);
 			acceptChild(visitor, getName());
 		}
 		visitor.endVisit(this);
@@ -184,6 +192,7 @@ public class ExpressionMethodReference extends MethodReference {
 	 * Returns the expression of this expression method reference expression
 	 *
 	 * @return the expression node
+	 * @deprecated replaced by elements.
 	 */
 	public Expression getExpression() {
 		if (this.expression == null) {
@@ -208,6 +217,7 @@ public class ExpressionMethodReference extends MethodReference {
 	 * <li>the node already has a parent</li>
 	 * <li>a cycle in would be created</li>
 	 * </ul>
+	 * @deprecated replaced by elements.
 	 */
 	public void setExpression(Expression expression) {
 		if (expression == null) {
@@ -217,6 +227,13 @@ public class ExpressionMethodReference extends MethodReference {
 		preReplaceChild(oldChild, expression, EXPRESSION_PROPERTY);
 		this.expression = expression;
 		postReplaceChild(oldChild, expression, EXPRESSION_PROPERTY);
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public List elements() {
+		return this.elements;
 	}
 
 	/**
@@ -279,7 +296,7 @@ public class ExpressionMethodReference extends MethodReference {
 	int treeSize() {
 		return
 			memSize()
-			+ (this.expression == null ? 0 : getExpression().treeSize())
+			+ (this.elements == null ? 0 : this.elements.listSize())
 			+ (this.typeArguments == null ? 0 : this.typeArguments.listSize())
 			+ (this.methodName == null ? 0 : getName().treeSize());
 	}

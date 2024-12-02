@@ -41,9 +41,16 @@ public class CastExpression extends Expression {
 	/**
 	 * The "expression" structural property of this node type (child type: {@link Expression}).
 	 * @since 3.0
+	 * @deprecated replaced by elements.
 	 */
 	public static final ChildPropertyDescriptor EXPRESSION_PROPERTY =
 		new ChildPropertyDescriptor(CastExpression.class, "expression", Expression.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
+
+	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
+		new ChildListPropertyDescriptor(CastExpression.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * A list of property descriptors (element type:
@@ -56,7 +63,7 @@ public class CastExpression extends Expression {
 		List properyList = new ArrayList(3);
 		createPropertyList(CastExpression.class, properyList);
 		addProperty(TYPE_PROPERTY, properyList);
-		addProperty(EXPRESSION_PROPERTY, properyList);
+		addProperty(ELEMENTS_PROPERTY, properyList);
 		PROPERTY_DESCRIPTORS = reapPropertyList(properyList);
 	}
 
@@ -83,8 +90,14 @@ public class CastExpression extends Expression {
 	/**
 	 * The expression; lazily initialized; defaults to a unspecified, but legal,
 	 * expression.
+	 * @deprecated replaced by elements.
 	 */
 	private volatile Expression expression;
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList elements = new ASTNode.NodeList(ELEMENTS_PROPERTY);
 
 	/**
 	 * Creates a new AST node for a cast expression owned by the given
@@ -106,14 +119,6 @@ public class CastExpression extends Expression {
 
 	@Override
 	final ASTNode internalGetSetChildProperty(ChildPropertyDescriptor property, boolean get, ASTNode child) {
-		if (property == EXPRESSION_PROPERTY) {
-			if (get) {
-				return getExpression();
-			} else {
-				setExpression((Expression) child);
-				return null;
-			}
-		}
 		if (property == TYPE_PROPERTY) {
 			if (get) {
 				return getType();
@@ -127,6 +132,15 @@ public class CastExpression extends Expression {
 	}
 
 	@Override
+	final List internalGetChildListProperty(ChildListPropertyDescriptor property) {
+		if (property == ELEMENTS_PROPERTY) {
+			return elements();
+		}
+		// allow default implementation to flag the error
+		return super.internalGetChildListProperty(property);
+	}
+
+	@Override
 	final int getNodeType0() {
 		return CAST_EXPRESSION;
 	}
@@ -136,7 +150,7 @@ public class CastExpression extends Expression {
 		CastExpression result = new CastExpression(target);
 		result.setSourceRange(getStartPosition(), getLength());
 		result.setType((Type) getType().clone(target));
-		result.setExpression((Expression) getExpression().clone(target));
+		result.elements().addAll(ASTNode.copySubtrees(target, elements()));
 		return result;
 	}
 
@@ -152,7 +166,7 @@ public class CastExpression extends Expression {
 		if (visitChildren) {
 			// visit children in normal left to right reading order
 			acceptChild(visitor, getType());
-			acceptChild(visitor, getExpression());
+			acceptChildren(visitor, this.elements);
 		}
 		visitor.endVisit(this);
 	}
@@ -199,6 +213,7 @@ public class CastExpression extends Expression {
 	 * Returns the expression of this cast expression.
 	 *
 	 * @return the expression node
+	 * @deprecated replaced by elements.
 	 */
 	public Expression getExpression() {
 		if (this.expression == null) {
@@ -223,6 +238,7 @@ public class CastExpression extends Expression {
 	 * <li>the node already has a parent</li>
 	 * <li>a cycle in would be created</li>
 	 * </ul>
+	 * @deprecated replaced by elements.
 	 */
 	public void setExpression(Expression expression) {
 		if (expression == null) {
@@ -232,6 +248,13 @@ public class CastExpression extends Expression {
 		preReplaceChild(oldChild, expression, EXPRESSION_PROPERTY);
 		this.expression = expression;
 		postReplaceChild(oldChild, expression, EXPRESSION_PROPERTY);
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public List elements() {
+		return this.elements;
 	}
 
 	@Override
@@ -244,7 +267,7 @@ public class CastExpression extends Expression {
 	int treeSize() {
 		return
 			memSize()
-			+ (this.expression == null ? 0 : getExpression().treeSize())
+			+ (this.elements == null ? 0 : this.elements.listSize())
 			+ (this.type == null ? 0 : getType().treeSize());
 	}
 }

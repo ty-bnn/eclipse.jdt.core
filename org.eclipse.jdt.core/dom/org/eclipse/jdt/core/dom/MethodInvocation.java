@@ -34,9 +34,17 @@ public class MethodInvocation extends Expression {
 	/**
 	 * The "expression" structural property of this node type (child type: {@link Expression}).
 	 * @since 3.0
+	 * @deprecated replaced by ELEMENTS_PROPERTY.
 	 */
 	public static final ChildPropertyDescriptor EXPRESSION_PROPERTY =
 		new ChildPropertyDescriptor(MethodInvocation.class, "expression", Expression.class, OPTIONAL, CYCLE_RISK); //$NON-NLS-1$
+
+	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(ArrayAccess.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
+
 
 	/**
 	 * The "typeArguments" structural property of this node type (element type: {@link Type}) (added in JLS3 API).
@@ -78,14 +86,14 @@ public class MethodInvocation extends Expression {
 	static {
 		List properyList = new ArrayList(4);
 		createPropertyList(MethodInvocation.class, properyList);
-		addProperty(EXPRESSION_PROPERTY, properyList);
+		addProperty(ELEMENTS_PROPERTY, properyList);
 		addProperty(NAME_PROPERTY, properyList);
 		addProperty(ARGUMENTS_PROPERTY, properyList);
 		PROPERTY_DESCRIPTORS_2_0 = reapPropertyList(properyList);
 
 		properyList = new ArrayList(5);
 		createPropertyList(MethodInvocation.class, properyList);
-		addProperty(EXPRESSION_PROPERTY, properyList);
+		addProperty(ELEMENTS_PROPERTY, properyList);
 		addProperty(TYPE_ARGUMENTS_PROPERTY, properyList);
 		addProperty(NAME_PROPERTY, properyList);
 		addProperty(ARGUMENTS_PROPERTY, properyList);
@@ -113,8 +121,14 @@ public class MethodInvocation extends Expression {
 
 	/**
 	 * The expression; <code>null</code> for none; defaults to none.
+	 * @deprecated replaced by elements.
 	 */
 	private Expression optionalExpression = null;
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList elements = new ASTNode.NodeList(ELEMENTS_PROPERTY);
 
 	/**
 	 * The type arguments (element type: {@link Type}).
@@ -166,20 +180,15 @@ public class MethodInvocation extends Expression {
 				return null;
 			}
 		}
-		if (property == EXPRESSION_PROPERTY) {
-			if (get) {
-				return getExpression();
-			} else {
-				setExpression((Expression) child);
-				return null;
-			}
-		}
 		// allow default implementation to flag the error
 		return super.internalGetSetChildProperty(property, get, child);
 	}
 
 	@Override
 	final List internalGetChildListProperty(ChildListPropertyDescriptor property) {
+		if (property == ELEMENTS_PROPERTY) {
+			return elements();
+		}
 		if (property == ARGUMENTS_PROPERTY) {
 			return arguments();
 		}
@@ -200,8 +209,7 @@ public class MethodInvocation extends Expression {
 		MethodInvocation result = new MethodInvocation(target);
 		result.setSourceRange(getStartPosition(), getLength());
 		result.setName((SimpleName) getName().clone(target));
-		result.setExpression(
-			(Expression) ASTNode.copySubtree(target, getExpression()));
+		result.elements().addAll(ASTNode.copySubtrees(target, elements()));
 		if (this.ast.apiLevel >= AST.JLS3_INTERNAL) {
 			result.typeArguments().addAll(ASTNode.copySubtrees(target, typeArguments()));
 		}
@@ -220,7 +228,7 @@ public class MethodInvocation extends Expression {
 		boolean visitChildren = visitor.visit(this);
 		if (visitChildren) {
 			// visit children in normal left to right reading order
-			acceptChild(visitor, getExpression());
+			acceptChildren(visitor, this.elements);
 			if (this.ast.apiLevel >= AST.JLS3_INTERNAL) {
 				acceptChildren(visitor, this.typeArguments);
 			}
@@ -235,6 +243,7 @@ public class MethodInvocation extends Expression {
 	 * <code>null</code> if there is none.
 	 *
 	 * @return the expression node, or <code>null</code> if there is none
+	 * @deprecated replaced by elements.
 	 */
 	public Expression getExpression() {
 		return this.optionalExpression;
@@ -266,12 +275,20 @@ public class MethodInvocation extends Expression {
 	 * <li>the node already has a parent</li>
 	 * <li>a cycle in would be created</li>
 	 * </ul>
+	 * @deprecated replaced by elements.
 	 */
 	public void setExpression(Expression expression) {
 		ASTNode oldChild = this.optionalExpression;
 		preReplaceChild(oldChild, expression, EXPRESSION_PROPERTY);
 		this.optionalExpression = expression;
 		postReplaceChild(oldChild, expression, EXPRESSION_PROPERTY);
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public List elements() {
+		return this.elements;
 	}
 
 	/**
@@ -368,7 +385,7 @@ public class MethodInvocation extends Expression {
 	int treeSize() {
 		return
 			memSize()
-			+ (this.optionalExpression == null ? 0 : getExpression().treeSize())
+			+ (this.elements == null ? 0 : this.elements.listSize())
 			+ (this.typeArguments == null ? 0 : this.typeArguments.listSize())
 			+ (this.methodName == null ? 0 : getName().treeSize())
 			+ (this.arguments == null ? 0 : this.arguments.listSize());

@@ -34,9 +34,16 @@ public class ArrayAccess extends Expression {
 	/**
 	 * The "array" structural property of this node type (child type: {@link Expression}).
 	 * @since 3.0
+	 * @deprecated replaced by ELEMENTS_PROPERTY.
 	 */
 	public static final ChildPropertyDescriptor ARRAY_PROPERTY =
 		new ChildPropertyDescriptor(ArrayAccess.class, "array", Expression.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
+
+	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(ArrayAccess.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * The "index" structural property of this node type (child type: {@link Expression}).
@@ -55,7 +62,7 @@ public class ArrayAccess extends Expression {
 	static {
 		List properyList = new ArrayList(3);
 		createPropertyList(ArrayAccess.class, properyList);
-		addProperty(ARRAY_PROPERTY, properyList);
+		addProperty(ELEMENTS_PROPERTY, properyList);
 		addProperty(INDEX_PROPERTY, properyList);
 		PROPERTY_DESCRIPTORS = reapPropertyList(properyList);
 	}
@@ -78,8 +85,14 @@ public class ArrayAccess extends Expression {
 	/**
 	 * The array expression; lazily initialized; defaults to an unspecified,
 	 * but legal, expression.
+	 * @deprecated replaced by elements.
 	 */
 	private volatile Expression arrayExpression;
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList elements = new ASTNode.NodeList(ELEMENTS_PROPERTY);
 
 	/**
 	 * The index expression; lazily initialized; defaults to an unspecified,
@@ -108,14 +121,6 @@ public class ArrayAccess extends Expression {
 
 	@Override
 	final ASTNode internalGetSetChildProperty(ChildPropertyDescriptor property, boolean get, ASTNode child) {
-		if (property == ARRAY_PROPERTY) {
-			if (get) {
-				return getArray();
-			} else {
-				setArray((Expression) child);
-				return null;
-			}
-		}
 		if (property == INDEX_PROPERTY) {
 			if (get) {
 				return getIndex();
@@ -129,6 +134,15 @@ public class ArrayAccess extends Expression {
 	}
 
 	@Override
+	final List internalGetChildListProperty(ChildListPropertyDescriptor property) {
+		if (property == ELEMENTS_PROPERTY) {
+			return elements();
+		}
+		// allow default implementation to flag the error
+		return super.internalGetChildListProperty(property);
+	}
+
+	@Override
 	final int getNodeType0() {
 		return ARRAY_ACCESS;
 	}
@@ -137,7 +151,7 @@ public class ArrayAccess extends Expression {
 	ASTNode clone0(AST target) {
 		ArrayAccess result = new ArrayAccess(target);
 		result.setSourceRange(getStartPosition(), getLength());
-		result.setArray((Expression) getArray().clone(target));
+		result.elements().addAll(ASTNode.copySubtrees(target, elements()));
 		result.setIndex((Expression) getIndex().clone(target));
 		return result;
 	}
@@ -153,7 +167,7 @@ public class ArrayAccess extends Expression {
 		boolean visitChildren = visitor.visit(this);
 		if (visitChildren) {
 			// visit children in normal left to right reading order
-			acceptChild(visitor, getArray());
+			acceptChildren(visitor, this.elements);
 			acceptChild(visitor, getIndex());
 		}
 		visitor.endVisit(this);
@@ -163,6 +177,7 @@ public class ArrayAccess extends Expression {
 	 * Returns the array expression of this array access expression.
 	 *
 	 * @return the array expression node
+	 * @deprecated replaced by elements.
 	 */
 	public Expression getArray() {
 		if (this.arrayExpression == null) {
@@ -187,6 +202,7 @@ public class ArrayAccess extends Expression {
 	 * <li>the node already has a parent</li>
 	 * <li>a cycle in would be created</li>
 	 * </ul>
+	 * @deprecated replaced by elements.
 	 */
 	public void setArray(Expression expression) {
 		if (expression == null) {
@@ -198,6 +214,13 @@ public class ArrayAccess extends Expression {
 		preReplaceChild(oldChild, expression, ARRAY_PROPERTY);
 		this.arrayExpression = expression;
 		postReplaceChild(oldChild, expression, ARRAY_PROPERTY);
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public List elements() {
+		return this.elements;
 	}
 
 	/**
@@ -250,7 +273,7 @@ public class ArrayAccess extends Expression {
 	int treeSize() {
 		return
 			memSize()
-			+ (this.arrayExpression == null ? 0 : getArray().treeSize())
+			+ (this.elements == null ? 0 : this.elements.listSize())
 			+ (this.indexExpression == null ? 0 : getIndex().treeSize());
 	}
 }

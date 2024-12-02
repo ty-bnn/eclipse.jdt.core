@@ -112,16 +112,30 @@ public class PostfixExpression extends Expression {
 	/**
 	 * The "operator" structural property of this node type (type: {@link PostfixExpression.Operator}).
 	 * @since 3.0
+	 * @deprecated replaced by OPERATOR2_PROPERTY.
 	 */
 	public static final SimplePropertyDescriptor OPERATOR_PROPERTY =
 		new SimplePropertyDescriptor(PostfixExpression.class, "operator", PostfixExpression.Operator.class, MANDATORY); //$NON-NLS-1$
 
 	/**
+	 * @since 3.39
+	 */
+	public static final ChildPropertyDescriptor OPERATOR2_PROPERTY =
+			new ChildPropertyDescriptor(PostfixExpression.class, "operator2", Operator.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
+
+	/**
 	 * The "operand" structural property of this node type (child type: {@link Expression}).
 	 * @since 3.0
+	 * @deprecated replaced by ELEMENTS_PROPERTY.
 	 */
 	public static final ChildPropertyDescriptor OPERAND_PROPERTY =
 		new ChildPropertyDescriptor(PostfixExpression.class, "operand", Expression.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
+
+	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(PostfixExpression.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * A list of property descriptors (element type:
@@ -133,8 +147,8 @@ public class PostfixExpression extends Expression {
 	static {
 		List propertyList = new ArrayList(3);
 		createPropertyList(PostfixExpression.class, propertyList);
-		addProperty(OPERAND_PROPERTY, propertyList);
-		addProperty(OPERATOR_PROPERTY, propertyList);
+		addProperty(ELEMENTS_PROPERTY, propertyList);
+		addProperty(OPERATOR2_PROPERTY, propertyList);
 		PROPERTY_DESCRIPTORS = reapPropertyList(propertyList);
 	}
 
@@ -155,15 +169,27 @@ public class PostfixExpression extends Expression {
 
 	/**
 	 * The operator; defaults to an unspecified postfix operator.
+	 * @deprecated replaced by operator2.
 	 */
 	private PostfixExpression.Operator operator =
 		PostfixExpression.Operator.INCREMENT;
 
 	/**
+	 * @since 3.39
+	 */
+	private org.eclipse.jdt.core.dom.Operator operator2 = new org.eclipse.jdt.core.dom.Operator(this.ast);
+
+	/**
 	 * The operand; lazily initialized; defaults to an unspecified,
 	 * but legal, simple name.
+	 * @deprecated replaced by elements.
 	 */
 	private volatile Expression operand;
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList elements = new ASTNode.NodeList(ELEMENTS_PROPERTY);
 
 	/**
 	 * Creates a new AST node for an postfix expression owned by the given
@@ -183,30 +209,31 @@ public class PostfixExpression extends Expression {
 
 	@Override
 	final Object internalGetSetObjectProperty(SimplePropertyDescriptor property, boolean get, Object value) {
-		if (property == OPERATOR_PROPERTY) {
-			if (get) {
-				return getOperator();
-			} else {
-				setOperator((Operator) value);
-				return null;
-			}
-		}
 		// allow default implementation to flag the error
 		return super.internalGetSetObjectProperty(property, get, value);
 	}
 
 	@Override
 	final ASTNode internalGetSetChildProperty(ChildPropertyDescriptor property, boolean get, ASTNode child) {
-		if (property == OPERAND_PROPERTY) {
+		if (property == OPERATOR2_PROPERTY) {
 			if (get) {
-				return getOperand();
+				return getOperator2();
 			} else {
-				setOperand((Expression) child);
+				setOperator2((org.eclipse.jdt.core.dom.Operator) child);
 				return null;
 			}
 		}
 		// allow default implementation to flag the error
 		return super.internalGetSetChildProperty(property, get, child);
+	}
+
+	@Override
+	final List internalGetChildListProperty(ChildListPropertyDescriptor property) {
+		if (property == ELEMENTS_PROPERTY) {
+			return elements();
+		}
+		// allow default implementation to flag the error
+		return super.internalGetChildListProperty(property);
 	}
 
 	@Override
@@ -218,8 +245,8 @@ public class PostfixExpression extends Expression {
 	ASTNode clone0(AST target) {
 		PostfixExpression result = new PostfixExpression(target);
 		result.setSourceRange(getStartPosition(), getLength());
-		result.setOperator(getOperator());
-		result.setOperand((Expression) getOperand().clone(target));
+		result.setOperator2(getOperator2());
+		result.elements().addAll(ASTNode.copySubtrees(target, elements()));
 		return result;
 	}
 
@@ -233,7 +260,8 @@ public class PostfixExpression extends Expression {
 	void accept0(ASTVisitor visitor) {
 		boolean visitChildren = visitor.visit(this);
 		if (visitChildren) {
-			acceptChild(visitor, getOperand());
+			acceptChildren(visitor, this.elements);
+			acceptChild(visitor, this.operator2);
 		}
 		visitor.endVisit(this);
 	}
@@ -242,6 +270,7 @@ public class PostfixExpression extends Expression {
 	 * Returns the operator of this postfix expression.
 	 *
 	 * @return the operator
+	 * @deprecated replaced by operator2.
 	 */
 	public PostfixExpression.Operator getOperator() {
 		return this.operator;
@@ -252,6 +281,7 @@ public class PostfixExpression extends Expression {
 	 *
 	 * @param operator the operator
 	 * @exception IllegalArgumentException if the argument is incorrect
+	 * @deprecated replaced by operator2.
 	 */
 	public void setOperator(PostfixExpression.Operator operator) {
 		if (operator == null) {
@@ -263,9 +293,30 @@ public class PostfixExpression extends Expression {
 	}
 
 	/**
+	 * @since 3.39
+	 */
+	public org.eclipse.jdt.core.dom.Operator getOperator2() {
+		return this.operator2;
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public void setOperator2(org.eclipse.jdt.core.dom.Operator operator) {
+		if (operator == null) {
+			throw new IllegalArgumentException();
+		}
+		ASTNode oldChild = this.operator2;
+		preReplaceChild(oldChild, operator, OPERATOR2_PROPERTY);
+		this.operator2 = operator;
+		postReplaceChild(oldChild, operator, OPERATOR2_PROPERTY);
+	}
+
+	/**
 	 * Returns the operand of this postfix expression.
 	 *
 	 * @return the operand expression node
+	 * @deprecated replaced by elements.
 	 */
 	public Expression getOperand() {
 		if (this.operand  == null) {
@@ -290,6 +341,7 @@ public class PostfixExpression extends Expression {
 	 * <li>the node already has a parent</li>
 	 * <li>a cycle in would be created</li>
 	 * </ul>
+	 * @deprecated replaced by elements.
 	 */
 	public void setOperand(Expression expression) {
 		if (expression == null) {
@@ -299,6 +351,13 @@ public class PostfixExpression extends Expression {
 		preReplaceChild(oldChild, expression, OPERAND_PROPERTY);
 		this.operand = expression;
 		postReplaceChild(oldChild, expression, OPERAND_PROPERTY);
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public List elements() {
+		return this.elements;
 	}
 
 	@Override
@@ -311,6 +370,7 @@ public class PostfixExpression extends Expression {
 	int treeSize() {
 		return
 			memSize()
-			+ (this.operand == null ? 0 : getOperand().treeSize());
+			+ (this.elements == null ? 0 : this.elements.listSize())
+			+ (this.operator2 == null ? 0 : getOperator2().treeSize());
 	}
 }

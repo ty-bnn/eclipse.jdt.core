@@ -19,6 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.jdt.core.dom.PostfixExpression.Operator;
+
 /**
  * Prefix expression AST node type.
  *
@@ -128,16 +130,32 @@ public class PrefixExpression extends Expression {
 	/**
 	 * The "operator" structural property of this node type (type: {@link PrefixExpression.Operator}).
 	 * @since 3.0
+	 * @deprecated replaced by OPERATOR2_PROPERTY.
 	 */
 	public static final SimplePropertyDescriptor OPERATOR_PROPERTY =
 		new SimplePropertyDescriptor(PrefixExpression.class, "operator", PrefixExpression.Operator.class, MANDATORY); //$NON-NLS-1$
 
 	/**
+	 * @since 3.39
+	 */
+	public static final ChildPropertyDescriptor OPERATOR2_PROPERTY =
+			new ChildPropertyDescriptor(PrefixExpression.class, "operator2", Operator.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
+
+
+	/**
 	 * The "operand" structural property of this node type (child type: {@link Expression}).
 	 * @since 3.0
+	 * @deprecated replaced by ELEMENTS_PROPERTY.
 	 */
 	public static final ChildPropertyDescriptor OPERAND_PROPERTY =
 		new ChildPropertyDescriptor(PrefixExpression.class, "operand", Expression.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
+
+	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(PrefixExpression.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
+
 
 	/**
 	 * A list of property descriptors (element type:
@@ -149,8 +167,8 @@ public class PrefixExpression extends Expression {
 	static {
 		List propertyList = new ArrayList(3);
 		createPropertyList(PrefixExpression.class, propertyList);
-		addProperty(OPERATOR_PROPERTY, propertyList);
-		addProperty(OPERAND_PROPERTY, propertyList);
+		addProperty(OPERATOR2_PROPERTY, propertyList);
+		addProperty(ELEMENTS_PROPERTY, propertyList);
 		PROPERTY_DESCRIPTORS = reapPropertyList(propertyList);
 	}
 
@@ -171,15 +189,29 @@ public class PrefixExpression extends Expression {
 
 	/**
 	 * The operator; defaults to an unspecified prefix operator.
+	 * @deprecated replaced by operator2.
 	 */
 	private PrefixExpression.Operator operator =
 		PrefixExpression.Operator.PLUS;
 
 	/**
+	 * @since 3.39
+	 */
+	private org.eclipse.jdt.core.dom.Operator operator2 = new org.eclipse.jdt.core.dom.Operator(this.ast);
+
+
+	/**
 	 * The operand; lazily initialized; defaults to an unspecified,
 	 * but legal, simple name.
+	 * @deprecated replaced by elements.
 	 */
 	private volatile Expression operand;
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList elements = new ASTNode.NodeList(ELEMENTS_PROPERTY);
+
 
 	/**
 	 * Creates a new AST node for an prefix expression owned by the given
@@ -199,30 +231,31 @@ public class PrefixExpression extends Expression {
 
 	@Override
 	final Object internalGetSetObjectProperty(SimplePropertyDescriptor property, boolean get, Object value) {
-		if (property == OPERATOR_PROPERTY) {
-			if (get) {
-				return getOperator();
-			} else {
-				setOperator((Operator) value);
-				return null;
-			}
-		}
 		// allow default implementation to flag the error
 		return super.internalGetSetObjectProperty(property, get, value);
 	}
 
 	@Override
 	final ASTNode internalGetSetChildProperty(ChildPropertyDescriptor property, boolean get, ASTNode child) {
-		if (property == OPERAND_PROPERTY) {
+		if (property == OPERATOR2_PROPERTY) {
 			if (get) {
-				return getOperand();
+				return getOperator2();
 			} else {
-				setOperand((Expression) child);
+				setOperator2((org.eclipse.jdt.core.dom.Operator) child);
 				return null;
 			}
 		}
 		// allow default implementation to flag the error
 		return super.internalGetSetChildProperty(property, get, child);
+	}
+
+	@Override
+	final List internalGetChildListProperty(ChildListPropertyDescriptor property) {
+		if (property == ELEMENTS_PROPERTY) {
+			return elements();
+		}
+		// allow default implementation to flag the error
+		return super.internalGetChildListProperty(property);
 	}
 
 	@Override
@@ -234,8 +267,8 @@ public class PrefixExpression extends Expression {
 	ASTNode clone0(AST target) {
 		PrefixExpression result = new PrefixExpression(target);
 		result.setSourceRange(getStartPosition(), getLength());
-		result.setOperator(getOperator());
-		result.setOperand((Expression) getOperand().clone(target));
+		result.setOperator2(getOperator2());
+		result.elements().addAll(ASTNode.copySubtrees(target, elements()));
 		return result;
 	}
 
@@ -251,6 +284,8 @@ public class PrefixExpression extends Expression {
 		if (visitChildren) {
 			// visit children in normal left to right reading order
 			acceptChild(visitor, getOperand());
+			acceptChild(visitor, this.operator2);
+			acceptChildren(visitor, this.elements);
 		}
 		visitor.endVisit(this);
 	}
@@ -259,6 +294,7 @@ public class PrefixExpression extends Expression {
 	 * Returns the operator of this prefix expression.
 	 *
 	 * @return the operator
+	 * @deprecated replaced by operator2.
 	 */
 	public PrefixExpression.Operator getOperator() {
 		return this.operator;
@@ -269,6 +305,7 @@ public class PrefixExpression extends Expression {
 	 *
 	 * @param operator the operator
 	 * @exception IllegalArgumentException if the argument is incorrect
+	 * @deprecated replaced by operator2.
 	 */
 	public void setOperator(PrefixExpression.Operator operator) {
 		if (operator == null) {
@@ -280,9 +317,30 @@ public class PrefixExpression extends Expression {
 	}
 
 	/**
+	 * @since 3.39
+	 */
+	public org.eclipse.jdt.core.dom.Operator getOperator2() {
+		return this.operator2;
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public void setOperator2(org.eclipse.jdt.core.dom.Operator operator) {
+		if (operator == null) {
+			throw new IllegalArgumentException();
+		}
+		ASTNode oldChild = this.operator2;
+		preReplaceChild(oldChild, operator, OPERATOR2_PROPERTY);
+		this.operator2 = operator;
+		postReplaceChild(oldChild, operator, OPERATOR2_PROPERTY);
+	}
+
+	/**
 	 * Returns the operand of this prefix expression.
 	 *
 	 * @return the operand expression node
+	 * @deprecated replaced by elements.
 	 */
 	public Expression getOperand() {
 		if (this.operand  == null) {
@@ -307,6 +365,7 @@ public class PrefixExpression extends Expression {
 	 * <li>the node already has a parent</li>
 	 * <li>a cycle in would be created</li>
 	 * </ul>
+	 * @deprecated replaced by elements.
 	 */
 	public void setOperand(Expression expression) {
 		if (expression == null) {
@@ -316,6 +375,13 @@ public class PrefixExpression extends Expression {
 		preReplaceChild(oldChild, expression, OPERAND_PROPERTY);
 		this.operand = expression;
 		postReplaceChild(oldChild, expression, OPERAND_PROPERTY);
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public List elements() {
+		return this.elements;
 	}
 
 	@Override
@@ -328,7 +394,8 @@ public class PrefixExpression extends Expression {
 	int treeSize() {
 		return
 			memSize()
-			+ (this.operand == null ? 0 : getOperand().treeSize());
+			+ (this.operator2 == null ? 0 : getOperator2().treeSize())
+			+ (this.elements == null ? 0 : this.elements.listSize());
 	}
 }
 

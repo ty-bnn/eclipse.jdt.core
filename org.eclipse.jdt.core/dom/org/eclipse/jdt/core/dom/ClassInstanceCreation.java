@@ -53,9 +53,16 @@ public class ClassInstanceCreation extends Expression {
 	/**
 	 * The "expression" structural property of this node type (child type: {@link Expression}).
 	 * @since 3.0
+	 * @deprecated replaced by ELEMENTS_PROPERTY.
 	 */
 	public static final ChildPropertyDescriptor EXPRESSION_PROPERTY =
 		new ChildPropertyDescriptor(ClassInstanceCreation.class, "expression", Expression.class, OPTIONAL, CYCLE_RISK); //$NON-NLS-1$
+
+	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(ClassInstanceCreation.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * The "name" structural property of this node type (child type: {@link Name}) (JLS2 API only).
@@ -113,7 +120,7 @@ public class ClassInstanceCreation extends Expression {
 
 		properyList = new ArrayList(6);
 		createPropertyList(ClassInstanceCreation.class, properyList);
-		addProperty(EXPRESSION_PROPERTY, properyList);
+		addProperty(ELEMENTS_PROPERTY, properyList);
 		addProperty(TYPE_ARGUMENTS_PROPERTY, properyList);
 		addProperty(TYPE_PROPERTY, properyList);
 		addProperty(ARGUMENTS_PROPERTY, properyList);
@@ -142,8 +149,14 @@ public class ClassInstanceCreation extends Expression {
 
 	/**
 	 * The optional expression; <code>null</code> for none; defaults to none.
+	 * @deprecated replaced by elements.
 	 */
 	private Expression optionalExpression = null;
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList elements = new ASTNode.NodeList(ELEMENTS_PROPERTY);
 
 	/**
 	 * The type arguments (element type: {@link Type}).
@@ -209,14 +222,6 @@ public class ClassInstanceCreation extends Expression {
 
 	@Override
 	final ASTNode internalGetSetChildProperty(ChildPropertyDescriptor property, boolean get, ASTNode child) {
-		if (property == EXPRESSION_PROPERTY) {
-			if (get) {
-				return getExpression();
-			} else {
-				setExpression((Expression) child);
-				return null;
-			}
-		}
 		if (property == NAME_PROPERTY) {
 			if (get) {
 				return getName();
@@ -247,6 +252,9 @@ public class ClassInstanceCreation extends Expression {
 
 	@Override
 	final List internalGetChildListProperty(ChildListPropertyDescriptor property) {
+		if (property == ELEMENTS_PROPERTY) {
+			return elements();
+		}
 		if (property == ARGUMENTS_PROPERTY) {
 			return arguments();
 		}
@@ -266,8 +274,7 @@ public class ClassInstanceCreation extends Expression {
 	ASTNode clone0(AST target) {
 		ClassInstanceCreation result = new ClassInstanceCreation(target);
 		result.setSourceRange(getStartPosition(), getLength());
-		result.setExpression(
-			(Expression) ASTNode.copySubtree(target, getExpression()));
+		result.elements().addAll(ASTNode.copySubtrees(target, elements()));
 		if (this.ast.apiLevel == AST.JLS2_INTERNAL) {
 			result.setName((Name) getName().clone(target));
 		}
@@ -293,7 +300,7 @@ public class ClassInstanceCreation extends Expression {
 		boolean visitChildren = visitor.visit(this);
 		if (visitChildren) {
 			// visit children in normal left to right reading order
-			acceptChild(visitor, getExpression());
+			acceptChildren(visitor, this.elements);
 			if (this.ast.apiLevel == AST.JLS2_INTERNAL) {
 				acceptChild(visitor, getName());
 			}
@@ -312,6 +319,7 @@ public class ClassInstanceCreation extends Expression {
 	 * <code>null</code> if there is none.
 	 *
 	 * @return the expression node, or <code>null</code> if there is none
+	 * @deprecated replaced by elements.
 	 */
 	public Expression getExpression() {
 		return this.optionalExpression;
@@ -328,6 +336,7 @@ public class ClassInstanceCreation extends Expression {
 	 * <li>the node already has a parent</li>
 	 * <li>a cycle in would be created</li>
 	 * </ul>
+	 * @deprecated replaced by elements.
 	 */
 	public void setExpression(Expression expression) {
 		// a ClassInstanceCreation may occur inside an Expression
@@ -336,6 +345,13 @@ public class ClassInstanceCreation extends Expression {
 		preReplaceChild(oldChild, expression, EXPRESSION_PROPERTY);
 		this.optionalExpression = expression;
 		postReplaceChild(oldChild, expression, EXPRESSION_PROPERTY);
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public List elements() {
+		return this.elements;
 	}
 
 	/**
@@ -554,7 +570,7 @@ public class ClassInstanceCreation extends Expression {
 			memSize()
 			+ (this.typeName == null ? 0 : getName().treeSize())
 			+ (this.type == null ? 0 : getType().treeSize())
-			+ (this.optionalExpression == null ? 0 : getExpression().treeSize())
+			+ (this.elements == null ? 0 : this.elements.listSize())
 			+ (this.typeArguments == null ? 0 : this.typeArguments.listSize())
 			+ (this.arguments == null ? 0 : this.arguments.listSize())
 			+ (this.optionalAnonymousClassDeclaration == null ? 0 : getAnonymousClassDeclaration().treeSize());
