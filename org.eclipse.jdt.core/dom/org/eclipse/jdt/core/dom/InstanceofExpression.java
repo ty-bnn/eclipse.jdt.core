@@ -42,7 +42,7 @@ public class InstanceofExpression extends Expression {
 	 * @since 3.39
 	 */
 	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
-			new ChildListPropertyDescriptor(InstanceofExpression.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
+			new ChildListPropertyDescriptor(InstanceofExpression.class, "elements", ASTNode.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * The "rightOperand" structural property of this node type (child type: {@link Type}).

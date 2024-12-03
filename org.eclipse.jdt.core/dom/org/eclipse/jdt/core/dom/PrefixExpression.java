@@ -19,8 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.jdt.core.dom.PostfixExpression.Operator;
-
 /**
  * Prefix expression AST node type.
  *
@@ -139,7 +137,7 @@ public class PrefixExpression extends Expression {
 	 * @since 3.39
 	 */
 	public static final ChildPropertyDescriptor OPERATOR2_PROPERTY =
-			new ChildPropertyDescriptor(PrefixExpression.class, "operator2", Operator.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
+			new ChildPropertyDescriptor(PrefixExpression.class, "operator2", org.eclipse.jdt.core.dom.Operator.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
 
 
 	/**
@@ -154,7 +152,7 @@ public class PrefixExpression extends Expression {
 	 * @since 3.39
 	 */
 	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
-			new ChildListPropertyDescriptor(PrefixExpression.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
+			new ChildListPropertyDescriptor(PrefixExpression.class, "elements", ASTNode.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 
 	/**

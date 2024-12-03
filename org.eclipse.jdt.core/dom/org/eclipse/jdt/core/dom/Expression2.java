@@ -7,7 +7,7 @@ import java.util.List;
  * @since 3.39
  */
 @SuppressWarnings({ "rawtypes" })
-public class Expression2 extends ASTNode {
+public class Expression2 extends Expression {
 	/**
 	 * @since 3.39
 	 */

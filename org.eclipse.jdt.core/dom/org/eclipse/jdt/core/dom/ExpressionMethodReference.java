@@ -42,7 +42,7 @@ public class ExpressionMethodReference extends MethodReference {
 	 * @since 3.39
 	 */
 	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
-			new ChildListPropertyDescriptor(ExpressionMethodReference.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
+			new ChildListPropertyDescriptor(ExpressionMethodReference.class, "elements", ASTNode.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 
 	/**

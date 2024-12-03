@@ -121,7 +121,7 @@ public class PostfixExpression extends Expression {
 	 * @since 3.39
 	 */
 	public static final ChildPropertyDescriptor OPERATOR2_PROPERTY =
-			new ChildPropertyDescriptor(PostfixExpression.class, "operator2", Operator.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
+			new ChildPropertyDescriptor(PostfixExpression.class, "operator2", org.eclipse.jdt.core.dom.Operator.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * The "operand" structural property of this node type (child type: {@link Expression}).
@@ -135,7 +135,7 @@ public class PostfixExpression extends Expression {
 	 * @since 3.39
 	 */
 	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
-			new ChildListPropertyDescriptor(PostfixExpression.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
+			new ChildListPropertyDescriptor(PostfixExpression.class, "elements", ASTNode.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * A list of property descriptors (element type:
