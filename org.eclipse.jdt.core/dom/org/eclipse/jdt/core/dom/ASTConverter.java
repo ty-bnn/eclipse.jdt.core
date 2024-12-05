@@ -1224,7 +1224,9 @@ class ASTConverter {
 			return nodes;
 		}
 
-		nodes.add(convert(expression));
+		Expression2 exp2 = convert(expression);
+		resetElementsParent(exp2.elements());
+		nodes.addAll(exp2.elements());
 		return nodes;
 	}
 
@@ -1352,8 +1354,9 @@ class ASTConverter {
 
 			return nodes;
 		}
-
-		nodes.add(convert(expression));
+		Expression2 exp2 = convert(expression);
+		resetElementsParent(exp2.elements());
+		nodes.addAll(exp2.elements());
 		return nodes;
 	}
 
@@ -1425,11 +1428,15 @@ class ASTConverter {
 		return switchCase;
 	}
 
-	// TODO: Expression2に変える
-	public Expression convert(org.eclipse.jdt.internal.compiler.ast.FakeDefaultLiteral fakeDefaultLiteral) {
+	public Expression2 convert(org.eclipse.jdt.internal.compiler.ast.FakeDefaultLiteral fakeDefaultLiteral) {
 		CaseDefaultExpression caseDefaultExpression = new CaseDefaultExpression(this.ast);
 		caseDefaultExpression.setSourceRange(fakeDefaultLiteral.sourceStart, fakeDefaultLiteral.sourceEnd - fakeDefaultLiteral.sourceStart + 1);
-		return caseDefaultExpression;
+		List<ASTNode> elts = getExpressionElements(caseDefaultExpression);
+		resetElementsParent(elts);
+		Expression2 exp2 = new Expression2(this.ast);
+		exp2.elements().addAll(elts);
+		exp2.setSourceRange(caseDefaultExpression.getStartPosition(), caseDefaultExpression.getLength());
+		return exp2;
 	}
 
 	public CastExpression convert(org.eclipse.jdt.internal.compiler.ast.CastExpression expression) {
@@ -2099,8 +2106,7 @@ class ASTConverter {
 		return literal;
 	}
 
-	// TODO: Expression2に変える
-	public Expression convert(org.eclipse.jdt.internal.compiler.ast.FieldReference reference) {
+	public Expression2 convert(org.eclipse.jdt.internal.compiler.ast.FieldReference reference) {
 		if (reference.receiver.isSuper()) {
 			final SuperFieldAccess superFieldAccess = new SuperFieldAccess(this.ast);
 			if (this.resolveBindings) {
@@ -2123,7 +2129,12 @@ class ASTConverter {
 				recordNodes(simpleName, reference);
 			}
 			superFieldAccess.setSourceRange(reference.receiver.sourceStart, reference.sourceEnd - reference.receiver.sourceStart + 1);
-			return superFieldAccess;
+			List<ASTNode> elts = getExpressionElements(superFieldAccess);
+			resetElementsParent(elts);
+			Expression2 exp2 = new Expression2(this.ast);
+			exp2.elements().addAll(elts);
+			exp2.setSourceRange(superFieldAccess.getStartPosition(), superFieldAccess.getLength());
+			return exp2;
 		} else {
 			final FieldAccess fieldAccess = new FieldAccess(this.ast);
 			if (this.resolveBindings) {
@@ -2142,7 +2153,12 @@ class ASTConverter {
 				recordNodes(simpleName, reference);
 			}
 			fieldAccess.setSourceRange(receiver.getStartPosition(), reference.sourceEnd - receiver.getStartPosition() + 1);
-			return fieldAccess;
+			List<ASTNode> elts = getExpressionElements(fieldAccess);
+			resetElementsParent(elts);
+			Expression2 exp2 = new Expression2(this.ast);
+			exp2.elements().addAll(elts);
+			exp2.setSourceRange(fieldAccess.getStartPosition(), fieldAccess.getLength());
+			return exp2;
 		}
 	}
 
@@ -2460,7 +2476,6 @@ class ASTConverter {
 		return literal;
 	}
 
-	// TODO: Expression2に変える
 	public Expression convert(MessageSend expression) {
 		// will return a MethodInvocation or a SuperMethodInvocation or
 		Expression expr;
@@ -2586,7 +2601,13 @@ class ASTConverter {
 			expr = methodInvocation;
 		}
 		expr.setSourceRange(sourceStart, expression.sourceEnd - sourceStart + 1);
-		return expr;
+
+		List<ASTNode> elts = getExpressionElements(expr);
+		resetElementsParent(elts);
+		Expression2 exp2 = new Expression2(this.ast);
+		exp2.elements().addAll(elts);
+		exp2.setSourceRange(expr.getStartPosition(), expr.getLength());
+		return exp2;
 	}
 
 	public Expression convert(org.eclipse.jdt.internal.compiler.ast.LambdaExpression lambda) {
