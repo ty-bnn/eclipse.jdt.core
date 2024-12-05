@@ -2334,7 +2334,9 @@ class ASTConverter {
 			recordNodes(patternInstanceOfExpression, expression);
 		}
 		Expression2 leftExpression = convert(expression.expression);
-		patternInstanceOfExpression.setLeftOperand(leftExpression);
+		List<ASTNode> elts = getExpressionElements(leftExpression);
+		resetElementsParent(elts);
+		patternInstanceOfExpression.elements().addAll(elts);
 		if (this.ast.apiLevel >= AST.JLS21) {
 			patternInstanceOfExpression.setPattern(convert(expression.pattern));
 		} else {

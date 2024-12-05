@@ -33,9 +33,16 @@ public class PatternInstanceofExpression extends Expression {
 
 	/**
 	 * The "leftOperand" structural property of this node type (child type: {@link Expression}).
+	 * @deprecated replaced by ELEMENTS_PROPERTY.
 	 */
 	public static final ChildPropertyDescriptor LEFT_OPERAND_PROPERTY =
 		new ChildPropertyDescriptor(PatternInstanceofExpression.class, "leftOperand", Expression.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
+
+	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(PatternInstanceofExpression.class, "elements", ASTNode.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * The "rightOperand" structural property of this node type (child type: {@link SingleVariableDeclaration}).
@@ -76,7 +83,7 @@ public class PatternInstanceofExpression extends Expression {
 
 		properyList = new ArrayList(3);
 		createPropertyList(PatternInstanceofExpression.class, properyList);
-		addProperty(LEFT_OPERAND_PROPERTY, properyList);
+		addProperty(ELEMENTS_PROPERTY, properyList);
 		addProperty(PATTERN_PROPERTY, properyList);
 		PROPERTY_DESCRIPTORS_20 = reapPropertyList(properyList);
 	}
@@ -116,8 +123,14 @@ public class PatternInstanceofExpression extends Expression {
 	/**
 	 * The left operand; lazily initialized; defaults to an unspecified,
 	 * but legal, simple name.
+	 * @deprecated replaced by elements.
 	 */
 	private volatile Expression leftOperand;
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList elements = new ASTNode.NodeList(ELEMENTS_PROPERTY);
 
 	/**
 	 * The right operand; lazily initialized; defaults to an unspecified,
@@ -155,14 +168,6 @@ public class PatternInstanceofExpression extends Expression {
 
 	@Override
 	final ASTNode internalGetSetChildProperty(ChildPropertyDescriptor property, boolean get, ASTNode child) {
-		if (property == LEFT_OPERAND_PROPERTY) {
-			if (get) {
-				return getLeftOperand();
-			} else {
-				setLeftOperand((Expression) child);
-				return null;
-			}
-		}
 		if (property == RIGHT_OPERAND_PROPERTY) {
 			if (get) {
 				return getRightOperand();
@@ -181,6 +186,15 @@ public class PatternInstanceofExpression extends Expression {
 		}
 		// allow default implementation to flag the error
 		return super.internalGetSetChildProperty(property, get, child);
+	}
+
+	@Override
+	final List internalGetChildListProperty(ChildListPropertyDescriptor property) {
+		if (property == ELEMENTS_PROPERTY) {
+			return elements();
+		}
+		// allow default implementation to flag the error
+		return super.internalGetChildListProperty(property);
 	}
 
 	@Override
@@ -227,6 +241,7 @@ public class PatternInstanceofExpression extends Expression {
 	 *
 	 * @return the left operand node
 	 * @since 3.27
+	 * @deprecated replaced by elements.
 	 */
 	public Expression getLeftOperand() {
 		if (this.leftOperand  == null) {
@@ -252,6 +267,7 @@ public class PatternInstanceofExpression extends Expression {
 	 * <li>a cycle in would be created</li>
 	 * </ul>
 	 * @since 3.27
+	 * @deprecated replaced by elements.
 	 */
 	public void setLeftOperand(Expression expression) {
 		if (expression == null) {
@@ -261,6 +277,13 @@ public class PatternInstanceofExpression extends Expression {
 		preReplaceChild(oldChild, expression, LEFT_OPERAND_PROPERTY);
 		this.leftOperand = expression;
 		postReplaceChild(oldChild, expression, LEFT_OPERAND_PROPERTY);
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public List elements() {
+		return this.elements;
 	}
 
 	/**
@@ -356,7 +379,7 @@ public class PatternInstanceofExpression extends Expression {
 	int treeSize() {
 		return
 			memSize()
-			+ (this.leftOperand == null ? 0 : getLeftOperand().treeSize())
+			+ (this.elements == null ? 0 : this.elements.listSize())
 			+ ((this.ast.apiLevel < AST.JLS20_INTERNAL) ?
 					(this.rightOperand == null ? 0 : getRightOperand().treeSize()) :
 						(this.pattern == null ? 0 : getPattern().treeSize()));
