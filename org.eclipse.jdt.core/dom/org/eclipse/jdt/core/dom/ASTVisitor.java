@@ -2188,6 +2188,13 @@ public abstract class ASTVisitor {
 	}
 
 	/**
+	 * @since 3.39
+	 */
+	public boolean visit(Type2 name) {
+		return true;
+	}
+
+	/**
 	 * End of visit the given type-specific AST node.
 	 * <p>
 	 * The default implementation does nothing. Subclasses may reimplement.
@@ -3672,6 +3679,13 @@ public abstract class ASTVisitor {
 	 * @since 3.39
 	 */
 	public void endVisit(Name2 node) {
+		// default implementation: do nothing
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public void endVisit(Type2 node) {
 		// default implementation: do nothing
 	}
 }

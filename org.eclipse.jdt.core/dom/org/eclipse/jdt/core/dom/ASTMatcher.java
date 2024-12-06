@@ -3287,4 +3287,12 @@ public class ASTMatcher {
 		return true;
 	}
 
+
+	/**
+	 * @since 3.39
+	 * TODO: if something went wrong, implement all nodes matcher which I made changes. Like ArrayAccess...
+	 */
+	public boolean match(Type2 node, Object other) {
+		return true;
+	}
 }
