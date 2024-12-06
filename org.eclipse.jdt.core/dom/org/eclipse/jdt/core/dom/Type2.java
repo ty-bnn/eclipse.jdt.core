@@ -7,7 +7,7 @@ import java.util.List;
  * @since 3.39
  */
 @SuppressWarnings({ "rawtypes" })
-public class Type2 extends Expression {
+public class Type2 extends Type {
 	/**
 	 * @since 3.39
 	 */
