@@ -61,9 +61,16 @@ public class ArrayType extends Type {
 	 * The "elementType" structural property of this node type (child type: {@link Type}) (added in JLS8 API).
 	 * Cannot be an array type.
 	 * @since 3.10
+	 * @deprecated replaced by ELEMENTS_PROPERTY.
 	 */
 	public static final ChildPropertyDescriptor ELEMENT_TYPE_PROPERTY =
 			new ChildPropertyDescriptor(ArrayType.class, "elementType", Type.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
+
+	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(ArrayType.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * The "dimensions" structural property of this node type (element type: {@link Dimension}) (added in JLS8 API).
@@ -93,7 +100,7 @@ public class ArrayType extends Type {
 
 		propertyList = new ArrayList(3);
 		createPropertyList(ArrayType.class, propertyList);
-		addProperty(ELEMENT_TYPE_PROPERTY, propertyList);
+		addProperty(ELEMENTS_PROPERTY, propertyList);
 		addProperty(DIMENSIONS_PROPERTY, propertyList);
 		PROPERTY_DESCRIPTORS_8_0 = reapPropertyList(propertyList);
 	}
@@ -123,8 +130,14 @@ public class ArrayType extends Type {
 	/**
 	 * The element type (before JLS8: component type); lazily initialized; defaults to a simple type with
 	 * an unspecified, but legal, name.
+	 * @deprecated replaced by elements.
 	 */
 	private volatile Type type;
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList elements = new ASTNode.NodeList(ELEMENTS_PROPERTY);
 
 	/**
 	 * List of dimensions this node has with optional annotations
@@ -184,27 +197,15 @@ public class ArrayType extends Type {
 		if (property == DIMENSIONS_PROPERTY) {
 			return dimensions();
 		}
+		if (property == ELEMENTS_PROPERTY) {
+			return elements();
+		}
 		// allow default implementation to flag the error
 		return super.internalGetChildListProperty(property);
 	}
 
 	@Override
 	final ASTNode internalGetSetChildProperty(ChildPropertyDescriptor property, boolean get, ASTNode child) {
-		if (property == COMPONENT_TYPE_PROPERTY) {
-			if (get) {
-				return getComponentType();
-			} else {
-				setComponentType((Type) child);
-				return null;
-			}
-		} else if (property == ELEMENT_TYPE_PROPERTY) {
-			if (get) {
-				return getElementType();
-			} else {
-				setElementType((Type) child);
-				return null;
-			}
-		}
 		// allow default implementation to flag the error
 		return super.internalGetSetChildProperty(property, get, child);
 	}
@@ -222,7 +223,7 @@ public class ArrayType extends Type {
 			result.setComponentType((Type) getComponentType().clone(target));
 		} else {
 			result = new ArrayType(target, 0);
-			result.setElementType((Type) getElementType().clone(target));
+			result.elements().addAll(ASTNode.copySubtrees(target, elements()));
 			result.dimensions().addAll(
 					ASTNode.copySubtrees(target, dimensions()));
 		}
@@ -244,7 +245,7 @@ public class ArrayType extends Type {
 			if (this.ast.apiLevel < AST.JLS8_INTERNAL) {
 				acceptChild(visitor, getComponentType());
 			} else {
-				acceptChild(visitor, getElementType());
+				acceptChildren(visitor, this.elements);
 				acceptChildren(visitor, this.dimensions);
 			}
 		}
@@ -318,6 +319,7 @@ public class ArrayType extends Type {
 	 * </p>
 	 *
 	 * @return the element type node
+	 * @deprecated replaced by elements.
 	 */
 	public Type getElementType() {
 		if (this.ast.apiLevel() < AST.JLS8_INTERNAL) {
@@ -342,6 +344,7 @@ public class ArrayType extends Type {
 	 * </ul>
 	 * @exception UnsupportedOperationException if this operation is used below JLS8
 	 * @since 3.10
+	 * @deprecated replaced by elements.
 	 */
 	public void setElementType(Type type) {
 		unsupportedIn2_3_4();
@@ -349,6 +352,13 @@ public class ArrayType extends Type {
 			throw new IllegalArgumentException();
 		}
 		internalSetType(type, ELEMENT_TYPE_PROPERTY);
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public List elements() {
+		return this.elements;
 	}
 
 	/**
@@ -403,8 +413,8 @@ public class ArrayType extends Type {
 	int treeSize() {
 		return
 			memSize()
-			+ (this.type == null ? 0 : (this.ast.apiLevel() < AST.JLS8_INTERNAL ? getComponentType().treeSize() : getElementType().treeSize())
-			+ (this.dimensions == null ? 0 : this.dimensions.listSize()));
+			+ (this.elements == null ? 0 : this.elements.listSize())
+			+ (this.dimensions == null ? 0 : this.dimensions.listSize());
 	}
 }
 

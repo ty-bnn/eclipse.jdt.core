@@ -78,9 +78,16 @@ public class QualifiedType extends AnnotatableType {
 
 	/**
 	 * The "qualifier" structural property of this node type (child type: {@link Type}).
+	 * @deprecated replaced by ELEMENTS_PROPERTY.
 	 */
 	public static final ChildPropertyDescriptor QUALIFIER_PROPERTY =
 		new ChildPropertyDescriptor(QualifiedType.class, "qualifier", Type.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
+
+	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(QualifiedType.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * The "annotations" structural property of this node type (element type: {@link Annotation}).
@@ -118,7 +125,7 @@ public class QualifiedType extends AnnotatableType {
 
 		propertyList = new ArrayList(4);
 		createPropertyList(QualifiedType.class, propertyList);
-		addProperty(QUALIFIER_PROPERTY, propertyList);
+		addProperty(ELEMENTS_PROPERTY, propertyList);
 		addProperty(ANNOTATIONS_PROPERTY, propertyList);
 		addProperty(NAME_PROPERTY, propertyList);
 		PROPERTY_DESCRIPTORS_8_0 = reapPropertyList(propertyList);
@@ -147,8 +154,14 @@ public class QualifiedType extends AnnotatableType {
 	/**
 	 * The type node; lazily initialized; defaults to a type with
 	 * an unspecified, but legal, simple name.
+	 * @deprecated replaced by elements.
 	 */
 	private volatile Type qualifier;
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList elements = new ASTNode.NodeList(ELEMENTS_PROPERTY);
 
 	/**
 	 * The name being qualified; lazily initialized; defaults to a unspecified,
@@ -189,20 +202,15 @@ public class QualifiedType extends AnnotatableType {
 		if (property == ANNOTATIONS_PROPERTY) {
 			return annotations();
 		}
+		if (property == ELEMENTS_PROPERTY) {
+			return elements();
+		}
 		// allow default implementation to flag the error
 		return super.internalGetChildListProperty(property);
 	}
 
 	@Override
 	final ASTNode internalGetSetChildProperty(ChildPropertyDescriptor property, boolean get, ASTNode child) {
-		if (property == QUALIFIER_PROPERTY) {
-			if (get) {
-				return getQualifier();
-			} else {
-				setQualifier((Type) child);
-				return null;
-			}
-		}
 		if (property == NAME_PROPERTY) {
 			if (get) {
 				return getName();
@@ -224,7 +232,7 @@ public class QualifiedType extends AnnotatableType {
 	ASTNode clone0(AST target) {
 		QualifiedType result = new QualifiedType(target);
 		result.setSourceRange(getStartPosition(), getLength());
-		result.setQualifier((Type) getQualifier().clone(target));
+		result.elements().addAll(ASTNode.copySubtrees(target, elements()));
 		if (this.ast.apiLevel >= AST.JLS8_INTERNAL) {
 			result.annotations().addAll(
 					ASTNode.copySubtrees(target, annotations()));
@@ -244,7 +252,7 @@ public class QualifiedType extends AnnotatableType {
 		boolean visitChildren = visitor.visit(this);
 		if (visitChildren) {
 			// visit children in normal left to right reading order
-			acceptChild(visitor, getQualifier());
+			acceptChildren(visitor, this.elements);
 			if (this.ast.apiLevel >= AST.JLS8_INTERNAL) {
 				acceptChildren(visitor, this.annotations);
 			}
@@ -257,6 +265,7 @@ public class QualifiedType extends AnnotatableType {
 	 * Returns the qualifier of this qualified type.
 	 *
 	 * @return the qualifier of this qualified type
+	 * @deprecated replaced by elements.
 	 */
 	public Type getQualifier() {
 		if (this.qualifier == null) {
@@ -280,6 +289,7 @@ public class QualifiedType extends AnnotatableType {
 	 * <li>the node belongs to a different AST</li>
 	 * <li>the node already has a parent</li>
 	 * </ul>
+	 * @deprecated replaced by elements.
 	 */
 	public void setQualifier(Type type) {
 		if (type == null) {
@@ -289,6 +299,13 @@ public class QualifiedType extends AnnotatableType {
 		preReplaceChild(oldChild, type, QUALIFIER_PROPERTY);
 		this.qualifier = type;
 		postReplaceChild(oldChild, type, QUALIFIER_PROPERTY);
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public List elements() {
+		return this.elements;
 	}
 
 	/**
@@ -339,7 +356,7 @@ public class QualifiedType extends AnnotatableType {
 	int treeSize() {
 		return
 			memSize()
-			+ (this.qualifier == null ? 0 : getQualifier().treeSize())
+			+ (this.elements == null ? 0 : this.elements.listSize())
 			+ (this.annotations == null ? 0 : this.annotations.listSize())
 			+ (this.name == null ? 0 : getName().treeSize());
 	}

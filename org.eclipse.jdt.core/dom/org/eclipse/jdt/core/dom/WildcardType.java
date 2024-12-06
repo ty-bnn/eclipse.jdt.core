@@ -44,9 +44,16 @@ public class WildcardType extends AnnotatableType {
 
 	/**
 	 * The "bound" structural property of this node type (child type: {@link Type}).
+	 * @deprecated replaced by ELEMENTS_PROPERTY.
 	 */
 	public static final ChildPropertyDescriptor BOUND_PROPERTY =
 		new ChildPropertyDescriptor(WildcardType.class, "bound", Type.class, OPTIONAL, CYCLE_RISK); //$NON-NLS-1$
+
+	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(WildcardType.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * The "upperBound" structural property of this node type (type: {@link Boolean}).
@@ -78,7 +85,7 @@ public class WildcardType extends AnnotatableType {
 		propertyList = new ArrayList(4);
 		createPropertyList(WildcardType.class, propertyList);
 		addProperty(ANNOTATIONS_PROPERTY, propertyList);
-		addProperty(BOUND_PROPERTY, propertyList);
+		addProperty(ELEMENTS_PROPERTY, propertyList);
 		addProperty(UPPER_BOUND_PROPERTY, propertyList);
 		PROPERTY_DESCRIPTORS_8_0 = reapPropertyList(propertyList);
 	}
@@ -107,8 +114,14 @@ public class WildcardType extends AnnotatableType {
 	/**
 	 * The optional type bound node; <code>null</code> if none;
 	 * defaults to none.
+	 * @deprecated replaced by elements.
 	 */
 	private Type optionalBound = null;
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList elements = new ASTNode.NodeList(ELEMENTS_PROPERTY);
 
 	/**
 	 * Indicates whether the wildcard bound is an upper bound
@@ -164,20 +177,15 @@ public class WildcardType extends AnnotatableType {
 		if (property == ANNOTATIONS_PROPERTY) {
 			return annotations();
 		}
+		if (property == ELEMENTS_PROPERTY) {
+			return elements();
+		}
 		// allow default implementation to flag the error
 		return super.internalGetChildListProperty(property);
 	}
 
 	@Override
 	final ASTNode internalGetSetChildProperty(ChildPropertyDescriptor property, boolean get, ASTNode child) {
-		if (property == BOUND_PROPERTY) {
-			if (get) {
-				return getBound();
-			} else {
-				setBound((Type) child);
-				return null;
-			}
-		}
 		// allow default implementation to flag the error
 		return super.internalGetSetChildProperty(property, get, child);
 	}
@@ -195,7 +203,7 @@ public class WildcardType extends AnnotatableType {
 			result.annotations().addAll(
 					ASTNode.copySubtrees(target, annotations()));
 		}
-		result.setBound((Type) ASTNode.copySubtree(target, getBound()), isUpperBound());
+		result.elements().addAll(ASTNode.copySubtrees(target, elements()));
 		return result;
 	}
 
@@ -213,7 +221,7 @@ public class WildcardType extends AnnotatableType {
 			if (this.ast.apiLevel >= AST.JLS8_INTERNAL) {
 				acceptChildren(visitor, this.annotations);
 			}
-			acceptChild(visitor, getBound());
+			acceptChildren(visitor, this.elements);
 		}
 		visitor.endVisit(this);
 	}
@@ -243,6 +251,7 @@ public class WildcardType extends AnnotatableType {
 	 * @return the bound of this wildcard type, or <code>null</code>
 	 * if none
 	 * @see #setBound(Type)
+	 * @deprecated replaced by elements.
 	 */
 	public Type getBound() {
 		return this.optionalBound;
@@ -264,6 +273,7 @@ public class WildcardType extends AnnotatableType {
 	 * </ul>
 	 * @see #getBound()
 	 * @see #isUpperBound()
+	 * @deprecated replaced by elements.
 	 */
 	public void setBound(Type type, boolean isUpperBound) {
 		setBound(type);
@@ -290,6 +300,13 @@ public class WildcardType extends AnnotatableType {
 	}
 
 	/**
+	 * @since 3.39
+	 */
+	public List elements() {
+		return this.elements;
+	}
+
+	/**
 	 * Sets whether this wildcard type is an upper bound
 	 * ("extends") as opposed to a lower bound ("super").
 	 *
@@ -313,7 +330,7 @@ public class WildcardType extends AnnotatableType {
 		return
 		memSize()
 		+ (this.annotations == null ? 0 : this.annotations.listSize())
-		+ (this.optionalBound == null ? 0 : getBound().treeSize());
+		+ (this.elements == null ? 0 : this.elements.listSize());
 	}
 }
 

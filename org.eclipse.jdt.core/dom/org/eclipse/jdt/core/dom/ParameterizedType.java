@@ -40,9 +40,16 @@ public class ParameterizedType extends Type {
 
 	/**
 	 * The "type" structural property of this node type (child type: {@link Type}).
+	 * @deprecated replaced by ELEMENTS_PROPERTY.
 	 */
 	public static final ChildPropertyDescriptor TYPE_PROPERTY =
 		new ChildPropertyDescriptor(ParameterizedType.class, "type", Type.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
+
+	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(ArrayAccess.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * The "typeArguments" structural property of this node type (element type: {@link Type}).
@@ -60,7 +67,7 @@ public class ParameterizedType extends Type {
 	static {
 		List propertyList = new ArrayList(3);
 		createPropertyList(ParameterizedType.class, propertyList);
-		addProperty(TYPE_PROPERTY, propertyList);
+		addProperty(ELEMENTS_PROPERTY, propertyList);
 		addProperty(TYPE_ARGUMENTS_PROPERTY, propertyList);
 		PROPERTY_DESCRIPTORS = reapPropertyList(propertyList);
 	}
@@ -82,8 +89,14 @@ public class ParameterizedType extends Type {
 	/**
 	 * The type node; lazily initialized; defaults to an unspecified, but legal,
 	 * type.
+	 * @deprecated replaced by elements.
 	 */
 	private volatile Type type;
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList elements = new ASTNode.NodeList(ELEMENTS_PROPERTY);
 
 	/**
 	 * The type arguments (element type: {@link Type}).
@@ -114,14 +127,6 @@ public class ParameterizedType extends Type {
 
 	@Override
 	final ASTNode internalGetSetChildProperty(ChildPropertyDescriptor property, boolean get, ASTNode child) {
-		if (property == TYPE_PROPERTY) {
-			if (get) {
-				return getType();
-			} else {
-				setType((Type) child);
-				return null;
-			}
-		}
 		// allow default implementation to flag the error
 		return super.internalGetSetChildProperty(property, get, child);
 	}
@@ -130,6 +135,9 @@ public class ParameterizedType extends Type {
 	final List internalGetChildListProperty(ChildListPropertyDescriptor property) {
 		if (property == TYPE_ARGUMENTS_PROPERTY) {
 			return typeArguments();
+		}
+		if (property == ELEMENTS_PROPERTY) {
+			return elements();
 		}
 		// allow default implementation to flag the error
 		return super.internalGetChildListProperty(property);
@@ -144,7 +152,7 @@ public class ParameterizedType extends Type {
 	ASTNode clone0(AST target) {
 		ParameterizedType result = new ParameterizedType(target);
 		result.setSourceRange(getStartPosition(), getLength());
-		result.setType((Type) getType().clone(target));
+		result.elements().addAll(ASTNode.copySubtrees(target, elements()));
 		result.typeArguments().addAll(
 			ASTNode.copySubtrees(target, typeArguments()));
 		return result;
@@ -161,7 +169,7 @@ public class ParameterizedType extends Type {
 		boolean visitChildren = visitor.visit(this);
 		if (visitChildren) {
 			// visit children in normal left to right reading order
-			acceptChild(visitor, getType());
+			acceptChildren(visitor, this.elements);
 			acceptChildren(visitor, this.typeArguments);
 		}
 		visitor.endVisit(this);
@@ -171,6 +179,7 @@ public class ParameterizedType extends Type {
 	 * Returns the type of this parameterized type.
 	 *
 	 * @return the type of this parameterized type
+	 * @deprecated replaced by elements.
 	 */
 	public Type getType() {
 		if (this.type == null) {
@@ -194,6 +203,7 @@ public class ParameterizedType extends Type {
 	 * <li>the node belongs to a different AST</li>
 	 * <li>the node already has a parent</li>
 	 * </ul>
+	 * @deprecated replaced by elements.
 	 */
 	public void setType(Type type) {
 		if (type == null) {
@@ -203,6 +213,13 @@ public class ParameterizedType extends Type {
 		preReplaceChild(oldChild, type, TYPE_PROPERTY);
 		this.type = type;
 		postReplaceChild(oldChild, type, TYPE_PROPERTY);
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public List elements() {
+		return this.elements;
 	}
 
 	/**
@@ -231,7 +248,7 @@ public class ParameterizedType extends Type {
 	int treeSize() {
 		return
 			memSize()
-			+ (this.type == null ? 0 : getType().treeSize())
+			+ (this.elements == null ? 0 : this.elements.listSize())
 			+ this.typeArguments.listSize();
 	}
 }
