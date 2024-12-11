@@ -1127,6 +1127,11 @@ public abstract class ASTNode {
 	public static final int TYPE2 = 122;
 
 	/**
+	 * @since 3.39
+	 */
+	public static final int PATTERN2 = 123;
+
+	/**
 	 * Returns the node class for the corresponding node type.
 	 *
 	 * @param nodeType AST node type

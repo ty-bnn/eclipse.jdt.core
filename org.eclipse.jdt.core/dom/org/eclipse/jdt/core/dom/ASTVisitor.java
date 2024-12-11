@@ -2190,7 +2190,14 @@ public abstract class ASTVisitor {
 	/**
 	 * @since 3.39
 	 */
-	public boolean visit(Type2 name) {
+	public boolean visit(Type2 type) {
+		return true;
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public boolean visit(Pattern2 pattern) {
 		return true;
 	}
 
@@ -3686,6 +3693,13 @@ public abstract class ASTVisitor {
 	 * @since 3.39
 	 */
 	public void endVisit(Type2 node) {
+		// default implementation: do nothing
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public void endVisit(Pattern2 node) {
 		// default implementation: do nothing
 	}
 }
