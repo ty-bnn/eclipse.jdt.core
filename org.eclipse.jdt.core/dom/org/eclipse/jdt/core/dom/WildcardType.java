@@ -53,7 +53,7 @@ public class WildcardType extends AnnotatableType {
 	 * @since 3.39
 	 */
 	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
-			new ChildListPropertyDescriptor(WildcardType.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
+			new ChildListPropertyDescriptor(WildcardType.class, "elements", ASTNode.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * The "upperBound" structural property of this node type (type: {@link Boolean}).

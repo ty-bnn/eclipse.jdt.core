@@ -70,7 +70,7 @@ public class ArrayType extends Type {
 	 * @since 3.39
 	 */
 	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
-			new ChildListPropertyDescriptor(ArrayType.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
+			new ChildListPropertyDescriptor(ArrayType.class, "elements", ASTNode.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * The "dimensions" structural property of this node type (element type: {@link Dimension}) (added in JLS8 API).

@@ -87,7 +87,7 @@ public class QualifiedType extends AnnotatableType {
 	 * @since 3.39
 	 */
 	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
-			new ChildListPropertyDescriptor(QualifiedType.class, "elements", Expression.class, NO_CYCLE_RISK); //$NON-NLS-1$
+			new ChildListPropertyDescriptor(QualifiedType.class, "elements", ASTNode.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * The "annotations" structural property of this node type (element type: {@link Annotation}).
