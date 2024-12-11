@@ -2582,9 +2582,6 @@ class ASTConverter {
 				resetElementsParent(qualifier2.elements());
 				methodInvocation.elements().addAll(qualifier2.elements());
 			}
-			List<ASTNode> elts = getExpressionElements(qualifier);
-			resetElementsParent(elts);
-			methodInvocation.elements().addAll(elts);
 			if (qualifier != null) {
 				sourceStart = qualifier.getStartPosition();
 			}
