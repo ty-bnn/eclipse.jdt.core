@@ -640,7 +640,6 @@ class ASTConverter {
 		ArrayType array = arrayType;
 		this.recordNodes(arrayType, astNode);
 		if (this.ast.apiLevel() >= AST.JLS8_INTERNAL) {
-			this.recordNodes(arrayType.getElementType(), astNode);
 			return;
 		}
 		int dimensions = array.getDimensions();
@@ -1215,7 +1214,7 @@ class ASTConverter {
 			org.eclipse.jdt.internal.compiler.ast.Assignment assignment = (org.eclipse.jdt.internal.compiler.ast.Assignment) expression;
 			nodes.addAll(getAssignments(assignment.lhs));
 			Operator op = new Operator(this.ast);
-			op.setOperator("=");
+			op.setOperator("="); //$NON-NLS-1$
 			PosAndLength pl = getOperatorPosAndLength(assignment.lhs.sourceEnd + 1, assignment.expression.sourceStart);
 			op.setSourceRange(pl.pos, pl.length);
 			nodes.add(op);
@@ -1241,7 +1240,7 @@ class ASTConverter {
 	}
 
 	private PosAndLength getOperatorPosAndLength(int start, int end) {
-		Scanner scanner = new Scanner(
+		Scanner scanner1 = new Scanner(
 				true /*comment*/,
 				false /*whitespace*/,
 				false /*nls*/,
@@ -1250,13 +1249,13 @@ class ASTConverter {
 				null/*taskPriorities*/,
 				true/*taskCaseSensitive*/,
 				JavaCore.ENABLED.equals(this.options.get(JavaCore.COMPILER_PB_ENABLE_PREVIEW_FEATURES)));
-		scanner.setSource(this.compilationUnitSource);
-		scanner.resetTo(start, end);
+		scanner1.setSource(this.compilationUnitSource);
+		scanner1.resetTo(start, end);
 		int pos = 0, length = 0;
 		try {
-			int token = scanner.getNextToken();
-			pos = scanner.getCurrentTokenStartPosition();
-			length = scanner.getCurrentTokenEndPosition() - pos + 1;
+			scanner1.getNextToken();
+			pos = scanner1.getCurrentTokenStartPosition();
+			length = scanner1.getCurrentTokenEndPosition() - pos + 1;
 		} catch (InvalidInputException e) {
 			// ignore
         }
@@ -2583,7 +2582,9 @@ class ASTConverter {
 				resetElementsParent(qualifier2.elements());
 				methodInvocation.elements().addAll(qualifier2.elements());
 			}
-			methodInvocation.setExpression(qualifier);
+			List<ASTNode> elts = getExpressionElements(qualifier);
+			resetElementsParent(elts);
+			methodInvocation.elements().addAll(elts);
 			if (qualifier != null) {
 				sourceStart = qualifier.getStartPosition();
 			}
@@ -2744,7 +2745,7 @@ class ASTConverter {
 		infixExpression.elements().add(convert(stringLiterals[0]));
 		for (int i = 1; i < stringLiterals.length; i++) {
 			Operator op = new Operator(this.ast);
-			op.setOperator("+");
+			op.setOperator("+"); //$NON-NLS-1$
 			infixExpression.elements().add(op);
 			getOperatorPosAndLength(stringLiterals[i-1].sourceEnd + 1, stringLiterals[i].sourceStart);
 			infixExpression.elements().add(convert(stringLiterals[i]));
@@ -2792,15 +2793,6 @@ class ASTConverter {
 		return literal;
 	}
 
-	private void setInfixSourcePositions(InfixExpression infixExpression, int sourceStart) {
-		int n = infixExpression.extendedOperands().size();
-		Expression rightMostExp = n <= 0 ? infixExpression.getRightOperand() : (Expression) infixExpression.extendedOperands().get(n - 1);
-		int rightSourceEnd = rightMostExp.getStartPosition() + rightMostExp.getLength() - 1;
-		int infixSourceEnd = infixExpression.getStartPosition() + infixExpression.getLength() - 1;
-		infixSourceEnd = rightSourceEnd > infixSourceEnd ? rightSourceEnd : infixSourceEnd;
-		infixExpression.setSourceRange(sourceStart, infixSourceEnd - sourceStart + 1);
-	}
-
 	public PostfixExpression convert(org.eclipse.jdt.internal.compiler.ast.PostfixExpression expression) {
 		final PostfixExpression postfixExpression = new PostfixExpression(this.ast);
 		if (this.resolveBindings) {
@@ -2818,11 +2810,11 @@ class ASTConverter {
 
 		switch (expression.operator) {
 			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.PLUS :
-				op.setOperator("++");
+				op.setOperator("++"); //$NON-NLS-1$
 				postfixExpression.setOperator2(op);
 				break;
 			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.MINUS :
-				op.setOperator("--");
+				op.setOperator("--"); //$NON-NLS-1$
 				postfixExpression.setOperator2(op);
 				break;
 		}
@@ -2865,11 +2857,11 @@ class ASTConverter {
 
 		switch (expression.operator) {
 			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.PLUS :
-				op.setOperator("++");
+				op.setOperator("++"); //$NON-NLS-1$
 				prefixExpression.setOperator2(op);
 				break;
 			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.MINUS :
-				op.setOperator("--");
+				op.setOperator("--"); //$NON-NLS-1$
 				prefixExpression.setOperator2(op);
 				break;
 		}
@@ -3615,19 +3607,19 @@ class ASTConverter {
 
 		switch ((expression.bits & org.eclipse.jdt.internal.compiler.ast.ASTNode.OperatorMASK) >> org.eclipse.jdt.internal.compiler.ast.ASTNode.OperatorSHIFT) {
 			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.PLUS :
-				op.setOperator("+");
+				op.setOperator("+"); //$NON-NLS-1$
 				prefixExpression.setOperator2(op);
 				break;
 			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.MINUS :
-				op.setOperator("-");
+				op.setOperator("-"); //$NON-NLS-1$
 				prefixExpression.setOperator2(op);
 				break;
 			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.NOT :
-				op.setOperator("!");
+				op.setOperator("!"); //$NON-NLS-1$
 				prefixExpression.setOperator2(op);
 				break;
 			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.TWIDDLE :
-				op.setOperator("~");
+				op.setOperator("~"); //$NON-NLS-1$
 				prefixExpression.setOperator2(op);
 		}
 		return prefixExpression;
@@ -4187,15 +4179,15 @@ class ASTConverter {
 
 	private void setTypeAnnotationsAndSourceRangeOnArray(ArrayType arrayType, org.eclipse.jdt.internal.compiler.ast.Annotation[][] annotationsOnDimensions) {
 		List dimensions = arrayType.dimensions();
-		Type elementType = arrayType.getElementType();
+		List<ASTNode> elts = arrayType.elements();
 
 		// Object[] a
 		// ^
-		int start = elementType.getStartPosition();
+		int start = elts.get(0).getStartPosition();
 
 		// Object[] a
 		//       ^
-		int startArray = start + elementType.getLength();
+		int startArray = elts.get(elts.size() - 1).getStartPosition() + elts.get(elts.size() - 1).getLength();
 
 		// Object[] a
 		//        ^
@@ -4284,14 +4276,46 @@ class ASTConverter {
 		}
 	}
 
-	public Type convertType(TypeReference typeReference) {
+	private List<ASTNode> getTypeElements(Type type) {
+		if (type == null) {
+			return null;
+		}
+
+		List<ASTNode> elts = new ArrayList<>();
+		if (type instanceof PrimitiveType) {
+			elts.add(type);
+			return elts;
+		}
+
+		List properties = type.structuralPropertiesForType();
+
+		for (Object p : properties) {
+			if (p instanceof ChildPropertyDescriptor) {
+				ASTNode child = (ASTNode) type.getStructuralProperty((ChildPropertyDescriptor) p);
+				if (child != null) {
+					elts.add(child);
+				}
+			} else if (p instanceof ChildListPropertyDescriptor) {
+				List<ASTNode> children = (List<ASTNode>) type.getStructuralProperty((ChildListPropertyDescriptor) p);
+				if (children != null) {
+					elts.addAll(children);
+				}
+			}
+		}
+
+		return elts;
+	}
+
+	public Type2 convertType(TypeReference typeReference) {
 		org.eclipse.jdt.internal.compiler.ast.Annotation[] annotations;
 		if (typeReference instanceof Wildcard) {
 			final Wildcard wildcard = (Wildcard) typeReference;
 			final WildcardType wildcardType = new WildcardType(this.ast);
 			if (wildcard.bound != null) {
 				final Type bound = convertType(wildcard.bound);
-				wildcardType.setBound(bound, wildcard.kind == Wildcard.EXTENDS);
+				List<ASTNode> elts = getTypeElements(bound);
+				resetElementsParent(elts);
+				wildcardType.elements().addAll(elts);
 				int start = wildcard.sourceStart;
 				wildcardType.setSourceRange(start, bound.getStartPosition() + bound.getLength() - start);
 			} else {
@@ -4305,7 +4329,13 @@ class ASTConverter {
 			if (typeReference.annotations != null && (annotations = typeReference.annotations[0]) != null) {
 				annotateType(wildcardType, annotations);
 			}
-			return wildcardType;
+			Type2 type2 = new Type2(this.ast);
+			List<ASTNode> elts = getTypeElements(wildcardType);
+			resetElementsParent(elts);
+			type2.setSourceRange(wildcardType.getStartPosition(), wildcardType.getLength());
+			type2.elements().addAll(elts);
+
+			return type2;
 		}
 		Type type = null;
 		int sourceStart = typeReference.sourceStart;
@@ -4368,7 +4398,7 @@ class ASTConverter {
 						if (newSourceStart > 0 && newSourceStart < sourceStart)
 							sourceStart = newSourceStart;
 						final ParameterizedType parameterizedType = new ParameterizedType(this.ast);
-						parameterizedType.setType(simpleType);
+						parameterizedType.elements().add(simpleType);
 						type = parameterizedType;
 						TypeReference[] typeArguments = parameterizedSingleTypeReference.typeArguments;
 						if (typeArguments != null) {
@@ -4472,7 +4502,9 @@ class ASTConverter {
 							int arglen = arguments.length;
 							ParameterizedType parameterizedType = new ParameterizedType(this.ast);
 							parameterizedType.index = indexOfEnclosingType;
-							parameterizedType.setType(currentType);
+							List<ASTNode> elts = getTypeElements(currentType);
+							resetElementsParent(elts);
+							parameterizedType.elements().addAll(elts);
 							if (this.resolveBindings) {
 								recordNodes(parameterizedType, typeReference);
 							}
@@ -4498,7 +4530,9 @@ class ASTConverter {
 							simpleName.setSourceRange(start, end - start + 1);
 							recordPendingNameScopeResolution(simpleName);
 							QualifiedType qualifiedType = new QualifiedType(this.ast);
-							qualifiedType.setQualifier(currentType);
+							List<ASTNode> elts = getTypeElements(currentType);
+							resetElementsParent(elts);
+							qualifiedType.elements().addAll(elts);
 							qualifiedType.setName(simpleName);
 							start = currentType.getStartPosition();
 							end = simpleName.getStartPosition() + simpleName.getLength() - 1;
@@ -4522,7 +4556,9 @@ class ASTConverter {
 								qualifiedType.index = indexOfEnclosingType;
 								ParameterizedType parameterizedType = new ParameterizedType(this.ast);
 								parameterizedType.index = indexOfEnclosingType;
-								parameterizedType.setType(currentType);
+								List<ASTNode> elts2 = getTypeElements(currentType);
+								resetElementsParent(elts2);
+								parameterizedType.elements().addAll(elts2);
 								if (this.resolveBindings) {
 									recordNodes(parameterizedType, typeReference);
 								}
@@ -4653,10 +4689,15 @@ class ASTConverter {
 					type.setFlags(type.getFlags() | ASTNode.MALFORMED);
 			}
 		}
-		return type;
+		Type2 type2 = new Type2(this.ast);
+		List<ASTNode> elts = getTypeElements(type);
+		resetElementsParent(elts);
+		type2.elements().addAll(elts);
+
+		return type2;
 	}
 
-	private Type createBaseType(TypeReference typeReference, long[] positions,
+	private Type2 createBaseType(TypeReference typeReference, long[] positions,
 			org.eclipse.jdt.internal.compiler.ast.Annotation[][] typeAnnotations, char[][] tokens, int lenth,
 			int firstTypeIndex, boolean isTypeArgumentBased) {
 		Type currentType;
@@ -4693,23 +4734,36 @@ class ASTConverter {
 					currentType.setFlags(currentType.getFlags() | ASTNode.MALFORMED);
 			}
 		}
-		return currentType;
+		Type2 type2 = new Type2(this.ast);
+		List<ASTNode> elts = getTypeElements(currentType);
+		resetElementsParent(elts);
+		type2.elements().addAll(elts);
+
+		return type2;
 	}
 
-	private QualifiedType createQualifiedType(TypeReference typeReference, long[] positions,
+	private Type2 createQualifiedType(TypeReference typeReference, long[] positions,
 			org.eclipse.jdt.internal.compiler.ast.Annotation[][] typeAnnotations, char[][] tokens, int index,
 			Type qualifier) {
 		SimpleName simpleName = createSimpleName(typeReference, positions, tokens, index);
 		QualifiedType qualifiedType = new QualifiedType(this.ast);
-		qualifiedType.setQualifier(qualifier);
+		List<ASTNode> elts = getTypeElements(qualifier);
+		resetElementsParent(elts);
+		qualifiedType.elements().addAll(elts);
 		qualifiedType.setName(simpleName);
 		int start = qualifier.getStartPosition();
 		int end = simpleName.getStartPosition() + simpleName.getLength() - 1;
 		setSourceRangeAnnotationsAndRecordNodes(typeReference, qualifiedType, typeAnnotations, index, start, end);
-		return qualifiedType;
+		Type2 type2 = new Type2(this.ast);
+		List<ASTNode> elts2 = getTypeElements(type2);
+		resetElementsParent(elts2);
+		type2.elements().addAll(elts2);
+		type2.setSourceRange(qualifiedType.getStartPosition(), qualifiedType.getLength());
+
+		return type2;
 	}
 
-	private SimpleType createSimpleType(Name name, TypeReference typeReference, long[] positions,
+	private Type2 createSimpleType(Name name, TypeReference typeReference, long[] positions,
 			int startIndex, int endIndex) {
 		SimpleType simpleType = new SimpleType(this.ast);
 		simpleType.setName(name);
@@ -4719,7 +4773,11 @@ class ASTConverter {
 		if (this.resolveBindings) {
 			recordNodes(simpleType, typeReference);
 		}
-		return simpleType;
+		Type2 type2 = new Type2(this.ast);
+		List<ASTNode> elts = getTypeElements(simpleType);
+		resetElementsParent(elts);
+		type2.elements().addAll(elts);
+		return type2;
 	}
 
 	private void setSourceRangeAnnotationsAndRecordNodes(TypeReference typeReference, AnnotatableType annotatableType,
@@ -5261,11 +5319,11 @@ class ASTConverter {
 							if (param.getType().isSimpleType()) {
 								recordName(((SimpleType)param.getType()).getName(), typeRef);
 							} else if (param.getType().isArrayType()) {
-								Type type = ((ArrayType) param.getType()).getElementType();
-								recordNodes(type, typeRef);
-								if (type.isSimpleType()) {
-									recordName(((SimpleType)type).getName(), typeRef);
-								}
+//								Type type = ((ArrayType) param.getType()).getElementType();
+//								recordNodes(type, typeRef);
+//								if (type.isSimpleType()) {
+//									recordName(((SimpleType)type).getName(), typeRef);
+//								}
 							}
 						}
 					}
@@ -6471,6 +6529,7 @@ class ASTConverter {
 				int remainingDimensions = arrayType.getDimensions() - extraDimension;
 				if (remainingDimensions == 0)  {
 					// the dimensions are after the name so the type of the fieldDeclaration is a simpleType
+					// Execution never arrived here because extraDimension never be other than zero.
 					Type elementType = arrayType.getElementType();
 					// cut the child loose from its parent (without creating garbage)
 					elementType.setParent(null, null);
@@ -6529,6 +6588,7 @@ class ASTConverter {
 				int remainingDimensions = arrayType.getDimensions() - extraDimension;
 				if (remainingDimensions == 0)  {
 					// the dimensions are after the name so the type of the fieldDeclaration is a simpleType
+					// Execution never arrived here because extraDimension never be other than zero.
 					Type elementType = arrayType.getElementType();
 					// cut the child loose from its parent (without creating garbage)
 					elementType.setParent(null, null);

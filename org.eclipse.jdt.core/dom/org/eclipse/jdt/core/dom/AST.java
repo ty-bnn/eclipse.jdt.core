@@ -1668,7 +1668,9 @@ public final class AST {
 			throw new IllegalArgumentException();
 		}
 		result = new ArrayType(this);
-		result.setElementType(elementType);
+		List<ASTNode> elts = getTypeElements(elementType);
+		resetElementsParent(elts);
+		result.elements().addAll(elts);
 		return result;
 	}
 
@@ -1719,7 +1721,9 @@ public final class AST {
 			throw new IllegalArgumentException();
 		}
 		result = new ArrayType(this, 0);
-		result.setElementType(elementType);
+		List<ASTNode> elts = getTypeElements(elementType);
+		resetElementsParent(elts);
+		result.elements().addAll(elts);
 		for (int i = 0; i < dimensions; ++i) {
 			result.dimensions().add(new Dimension(this));
 		}
@@ -2728,7 +2732,9 @@ public final class AST {
 	 */
 	public ParameterizedType newParameterizedType(Type type) {
 		ParameterizedType result = new ParameterizedType(this);
-		result.setType(type);
+		List<ASTNode> elts = getTypeElements(type);
+		resetElementsParent(elts);
+		result.elements().addAll(elts);
 		return result;
 	}
 
@@ -2849,7 +2855,9 @@ public final class AST {
 	 */
 	public QualifiedType newQualifiedType(Type qualifier, SimpleName name) {
 		QualifiedType result = new QualifiedType(this);
-		result.setQualifier(qualifier);
+		List<ASTNode> elts = getTypeElements(qualifier);
+		resetElementsParent(elts);
+		result.elements().addAll(elts);
 		result.setName(name);
 		return result;
 	}
@@ -4018,5 +4026,45 @@ public final class AST {
 	 */
 	public static int getJLSLatest() {
 		return JLS_INTERNAL_Latest;
+	}
+
+	private List<ASTNode> getTypeElements(Type type) {
+		if (type == null) {
+			return null;
+		}
+
+		List<ASTNode> elts = new ArrayList<>();
+		if (type instanceof PrimitiveType) {
+			elts.add(type);
+			return elts;
+		}
+
+		List properties = type.structuralPropertiesForType();
+
+		for (Object p : properties) {
+			if (p instanceof ChildPropertyDescriptor) {
+				ASTNode child = (ASTNode) type.getStructuralProperty((ChildPropertyDescriptor) p);
+				if (child != null) {
+					elts.add(child);
+				}
+			} else if (p instanceof ChildListPropertyDescriptor) {
+				List<ASTNode> children = (List<ASTNode>) type.getStructuralProperty((ChildListPropertyDescriptor) p);
+				if (children != null) {
+					elts.addAll(children);
+				}
+			}
+		}
+
+		return elts;
+	}
+
+	private void resetElementsParent(List<ASTNode> nodes) {
+		if (nodes == null) {
+			return;
+		}
+
+		for (ASTNode n : nodes) {
+			n.setParent(null, null);
+		}
 	}
 }
