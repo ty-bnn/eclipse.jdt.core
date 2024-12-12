@@ -1403,7 +1403,11 @@ class ASTConverter {
 				switchCase.expressions().add(convert((org.eclipse.jdt.internal.compiler.ast.FakeDefaultLiteral)expressions[0]));
 			} else {
 				for (org.eclipse.jdt.internal.compiler.ast.Expression expression : expressions) {
-					switchCase.expressions().add(convert(expression));
+					if (expression instanceof org.eclipse.jdt.internal.compiler.ast.Pattern) {
+						switchCase.expressions().add(convert((org.eclipse.jdt.internal.compiler.ast.Pattern) expression));
+					} else {
+						switchCase.expressions().add(convert(expression));
+					}
 				}
 			}
 		} else {
@@ -1412,7 +1416,7 @@ class ASTConverter {
 			if (constantExpression == null) {
 				internalSetExpression(switchCase, null);
 			} else {
-//				internalSetExpression(switchCase, convert(constantExpression));
+				internalSetExpression(switchCase, convert(constantExpression));
 			}
 		}
 		if (this.ast.apiLevel >= AST.JLS14_INTERNAL) {
