@@ -40,8 +40,15 @@ public class GuardedPattern extends Pattern{
 
 	/**
 	 * The "pattern" structural property of this node type (child type: {@link Pattern}). (added in JEP 406).
+	 * @deprecated replaced by ELEMENTS_PROPERTY.s
 	 */
 	public static final ChildPropertyDescriptor PATTERN_PROPERTY  = internalPatternPropertyFactory(GuardedPattern.class);
+
+	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(GuardedPattern.class, "elements", ASTNode.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * The "expression" structural property of this node type (child type: {@link Expression}). (added in JEP 406).
@@ -65,15 +72,21 @@ public class GuardedPattern extends Pattern{
 	static {
 		List propertyList = new ArrayList(3);
 		createPropertyList(GuardedPattern.class, propertyList);
-		addProperty(PATTERN_PROPERTY, propertyList);
+		addProperty(ELEMENTS_PROPERTY, propertyList);
 		addProperty(EXPRESSION_PROPERTY, propertyList);
 		PROPERTY_DESCRIPTORS = reapPropertyList(propertyList);
 	}
 
 	/**
 	 * The pattern; <code>null</code> for none
+	 * * @deprecated replaced by elements.
 	 */
 	private volatile Pattern pattern;
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList elements = new ASTNode.NodeList(ELEMENTS_PROPERTY);
 
 	/**
 	 * The expression; <code>null</code> for none; lazily initialized (but
@@ -101,16 +114,18 @@ public class GuardedPattern extends Pattern{
 				setExpression((Expression) child);
 				return null;
 			}
-		} else if (property == PATTERN_PROPERTY) {
-			if (get) {
-				return getPattern();
-			} else {
-				setPattern((Pattern)child);
-				return null;
-			}
 		}
 		// allow default implementation to flag the error
 		return super.internalGetSetChildProperty(property, get, child);
+	}
+
+	@Override
+	final List internalGetChildListProperty(ChildListPropertyDescriptor property) {
+		if (property == ELEMENTS_PROPERTY) {
+			return elements();
+		}
+		// allow default implementation to flag the error
+		return super.internalGetChildListProperty(property);
 	}
 
 	@Override
@@ -127,7 +142,7 @@ public class GuardedPattern extends Pattern{
 	ASTNode clone0(AST target) {
 		GuardedPattern result = new GuardedPattern(target);
 		result.setSourceRange(getStartPosition(), getLength());
-		result.setPattern((Pattern) getPattern().clone(target));
+		result.elements().addAll(ASTNode.copySubtrees(target, elements()));
 		result.setExpression((Expression) getExpression().clone(target));
 		result.setRestrictedIdentifierStartPosition(this.restrictedIdentifierStartPosition);
 		return result;
@@ -138,7 +153,7 @@ public class GuardedPattern extends Pattern{
 		boolean visitChildren = visitor.visit(this);
 		if (visitChildren) {
 			// visit children in normal left to right reading order
-			acceptChild(visitor, getPattern());
+			acceptChildren(visitor, this.elements);
 			acceptChild(visitor, getExpression());
 		}
 		visitor.endVisit(this);
@@ -154,7 +169,7 @@ public class GuardedPattern extends Pattern{
 	int treeSize() {
 		return
 				memSize()
-			+ (this.pattern == null ? 0 : getPattern().treeSize())
+			+ (this.elements == null ? 0 : this.elements.listSize())
 			+ (this.conditionalExpression == null ? 0 : getExpression().treeSize());
 	}
 
@@ -220,6 +235,7 @@ public class GuardedPattern extends Pattern{
 	 * @exception UnsupportedOperationException if this operation is used other than JLS18
 	 * @exception UnsupportedOperationException if this expression is used with previewEnabled flag as false
 	 * @noreference This method is not intended to be referenced by clients as it is a part of Java preview feature.
+	 * @deprecated replaced by elements.
 	 */
 	public Pattern getPattern() {
 		supportedOnlyIn21();
@@ -262,6 +278,7 @@ public class GuardedPattern extends Pattern{
 	 * @exception UnsupportedOperationException if this operation is used not for JLS18
 	 * @exception UnsupportedOperationException if this operation is used without previewEnabled
 	 * @since 3.38
+	 * @deprecated replaced by elements.
 	 */
 	public void setPattern(Pattern pattern) {
 		supportedOnlyIn21();
@@ -269,6 +286,13 @@ public class GuardedPattern extends Pattern{
 		preReplaceChild(oldChild, pattern, PATTERN_PROPERTY);
 		this.pattern = pattern;
 		postReplaceChild(oldChild, pattern, PATTERN_PROPERTY);
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public List elements() {
+		return this.elements;
 	}
 
 	/**

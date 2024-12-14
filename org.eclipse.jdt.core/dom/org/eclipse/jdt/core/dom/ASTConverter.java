@@ -1262,6 +1262,16 @@ class ASTConverter {
 		return new PosAndLength(pos, length);
 	}
 
+	private PosAndLength getPosAndLengthFromElements(List<ASTNode> elts) {
+		if (elts == null || elts.size() == 0) {
+			return new PosAndLength(0, 0);
+		}
+		return new PosAndLength(
+				elts.get(0).getStartPosition(),
+				elts.get(elts.size() - 1).getStartPosition() + elts.get(elts.size() - 1).getLength() - elts.get(0).getStartPosition()
+		);
+	}
+
 	public RecordDeclaration convertToRecord(org.eclipse.jdt.internal.compiler.ast.ASTNode[] nodes) {
 		final RecordDeclaration typeDecl = new RecordDeclaration(this.ast);
 		ASTNode oldReferenceContext = this.referenceContext;
@@ -2251,7 +2261,10 @@ class ASTConverter {
 		if (this.resolveBindings) {
 			recordNodes(guardedPattern, pattern);
 		}
-		guardedPattern.setPattern(convert(pattern.primaryPattern));
+		Pattern2 pat2 = convert(pattern.primaryPattern);
+		List<ASTNode> elts = getPatternElements(pat2);
+		resetElementsParent(elts);
+		guardedPattern.elements().addAll(elts);
 		guardedPattern.setExpression(convert(pattern.condition));
 		int startPosition = pattern.sourceStart;
 		int sourceEnd = pattern.sourceEnd;
@@ -2822,23 +2835,59 @@ class ASTConverter {
 		return postfixExpression;
 	}
 
-	public Pattern convert(org.eclipse.jdt.internal.compiler.ast.Pattern pattern) {
+	public Pattern2 convert(org.eclipse.jdt.internal.compiler.ast.Pattern pattern) {
+			Pattern pat = null;
+
 			if (!DOMASTUtil.isPatternSupported(this.ast)) {
-				return createFakeNullPattern(pattern);
+				pat = createFakeNullPattern(pattern);
 			}
 			if (pattern instanceof org.eclipse.jdt.internal.compiler.ast.RecordPattern) {
-				return convert((org.eclipse.jdt.internal.compiler.ast.RecordPattern) pattern);
+				pat = convert((org.eclipse.jdt.internal.compiler.ast.RecordPattern) pattern);
 			}
 			if (pattern instanceof org.eclipse.jdt.internal.compiler.ast.EitherOrMultiPattern) {
-				return convert((org.eclipse.jdt.internal.compiler.ast.EitherOrMultiPattern) pattern);
+				pat = convert((org.eclipse.jdt.internal.compiler.ast.EitherOrMultiPattern) pattern);
 			}
 			if (pattern instanceof org.eclipse.jdt.internal.compiler.ast.GuardedPattern) {
-				return convert((org.eclipse.jdt.internal.compiler.ast.GuardedPattern) pattern);
+				pat = convert((org.eclipse.jdt.internal.compiler.ast.GuardedPattern) pattern);
 			}
 			if (pattern instanceof org.eclipse.jdt.internal.compiler.ast.TypePattern) {
-				return convert((org.eclipse.jdt.internal.compiler.ast.TypePattern) pattern);
+				pat = convert((org.eclipse.jdt.internal.compiler.ast.TypePattern) pattern);
 			}
+
+			Pattern2 pattern2 = new Pattern2(this.ast);
+			List<ASTNode> elts = getPatternElements(pat);
+			resetElementsParent(elts);
+			pattern2.elements().addAll(elts);
+			PosAndLength pl = getPosAndLengthFromElements(elts);
+			pattern2.setSourceRange(pl.pos, pl.length);
+
+			return pattern2;
+	}
+
+	private List<ASTNode> getPatternElements(Pattern pattern) {
+		if (pattern == null) {
 			return null;
+		}
+
+		List<ASTNode> elts = new ArrayList<>();
+
+		List properties = pattern.structuralPropertiesForType();
+
+		for (Object p : properties) {
+			if (p instanceof ChildPropertyDescriptor) {
+				ASTNode child = (ASTNode) pattern.getStructuralProperty((ChildPropertyDescriptor) p);
+				if (child != null) {
+					elts.add(child);
+				}
+			} else if (p instanceof ChildListPropertyDescriptor) {
+				List<ASTNode> children = (List<ASTNode>) pattern.getStructuralProperty((ChildListPropertyDescriptor) p);
+				if (children != null) {
+					elts.addAll(children);
+				}
+			}
+		}
+
+		return elts;
 	}
 
 	public PrefixExpression convert(org.eclipse.jdt.internal.compiler.ast.PrefixExpression expression) {
