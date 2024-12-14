@@ -2315,8 +2315,20 @@ class ASTConverter {
 		ifStatement.setThenStatement(thenStatement);
 		org.eclipse.jdt.internal.compiler.ast.Statement statement2 = statement.elseStatement;
 		if (statement2 != null) {
-			final Statement elseStatement = convert(statement2);
+			Statement elseStatement = convert(statement2);
+			if (elseStatement instanceof IfStatement) {
+				IfStatement elifStatement = (IfStatement) elseStatement;
+				List<ASTNode> elts = new ArrayList<>();
+				elts.add(elifStatement.getExpression());
+				elts.add(elifStatement.getThenStatement());
+				elts.addAll(elifStatement.elifElements());
+				resetElementsParent(elts);
+				ifStatement.elifElements().addAll(elts);
+				elseStatement = elifStatement.getElseStatement();
+			}
+
 			if (elseStatement != null) {
+				elseStatement.setParent(null, null);
 				ifStatement.setElseStatement(elseStatement);
 			}
 		}

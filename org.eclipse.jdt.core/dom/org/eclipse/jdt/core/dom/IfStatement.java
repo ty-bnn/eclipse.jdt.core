@@ -45,6 +45,12 @@ public class IfStatement extends Statement {
 		new ChildPropertyDescriptor(IfStatement.class, "thenStatement", Statement.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
 
 	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ELIF_ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(IfStatement.class, "elifElements", ASTNode.class, NO_CYCLE_RISK); //$NON-NLS-1$
+
+	/**
 	 * The "elseStatement" structural property of this node type (child type: {@link Statement}).
 	 * @since 3.0
 	 */
@@ -63,6 +69,7 @@ public class IfStatement extends Statement {
 		createPropertyList(IfStatement.class, properyList);
 		addProperty(EXPRESSION_PROPERTY, properyList);
 		addProperty(THEN_STATEMENT_PROPERTY, properyList);
+		addProperty(ELIF_ELEMENTS_PROPERTY, properyList);
 		addProperty(ELSE_STATEMENT_PROPERTY, properyList);
 		PROPERTY_DESCRIPTORS = reapPropertyList(properyList);
 	}
@@ -93,6 +100,11 @@ public class IfStatement extends Statement {
 	 * legal, statement.
 	 */
 	private volatile Statement thenStatement;
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList elifElements = new ASTNode.NodeList(ELIF_ELEMENTS_PROPERTY);
 
 	/**
 	 * The else statement; <code>null</code> for none; defaults to none.
@@ -150,6 +162,15 @@ public class IfStatement extends Statement {
 	}
 
 	@Override
+	final List internalGetChildListProperty(ChildListPropertyDescriptor property) {
+		if (property == ELIF_ELEMENTS_PROPERTY) {
+			return elifElements();
+		}
+		// allow default implementation to flag the error
+		return super.internalGetChildListProperty(property);
+	}
+
+	@Override
 	final int getNodeType0() {
 		return IF_STATEMENT;
 	}
@@ -162,6 +183,7 @@ public class IfStatement extends Statement {
 		result.setExpression((Expression) getExpression().clone(target));
 		result.setThenStatement(
 			(Statement) getThenStatement().clone(target));
+		result.elifElements().addAll(ASTNode.copySubtrees(target, elifElements()));
 		result.setElseStatement(
 			(Statement) ASTNode.copySubtree(target, getElseStatement()));
 		return result;
@@ -180,6 +202,7 @@ public class IfStatement extends Statement {
 			// visit children in normal left to right reading order
 			acceptChild(visitor, getExpression());
 			acceptChild(visitor, getThenStatement());
+			acceptChildren(visitor, this.elifElements);
 			acceptChild(visitor, getElseStatement());
 		}
 		visitor.endVisit(this);
@@ -272,6 +295,13 @@ public class IfStatement extends Statement {
 	}
 
 	/**
+	 * @since 3.39
+	 */
+	public List elifElements() {
+		return this.elifElements;
+	}
+
+	/**
 	 * Returns the "else" part of this if statement, or <code>null</code> if
 	 * this if statement has <b>no</b> "else" part.
 	 * <p>
@@ -328,6 +358,7 @@ public class IfStatement extends Statement {
 			memSize()
 			+ (this.expression == null ? 0 : getExpression().treeSize())
 			+ (this.thenStatement == null ? 0 : getThenStatement().treeSize())
+			+ (this.elifElements == null ? 0 : this.elifElements.listSize())
 			+ (this.optionalElseStatement == null ? 0 : getElseStatement().treeSize());
 	}
 }
