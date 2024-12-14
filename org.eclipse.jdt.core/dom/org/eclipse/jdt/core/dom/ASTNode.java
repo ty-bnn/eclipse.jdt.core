@@ -1383,6 +1383,12 @@ public abstract class ASTNode {
 				return Operator.class;
 			case EXPRESSION2 :
 				return Expression2.class;
+			case NAME2 :
+				return Name2.class;
+			case TYPE2 :
+				return Type2.class;
+			case PATTERN2 :
+				return Pattern2.class;
 		}
 		throw new IllegalArgumentException();
 	}
