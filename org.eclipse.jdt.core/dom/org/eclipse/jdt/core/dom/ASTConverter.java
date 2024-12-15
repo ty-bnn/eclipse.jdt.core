@@ -1998,7 +1998,7 @@ class ASTConverter {
 		List<ASTNode> elts = getExpressionElements(exp);
 		resetElementsParent(elts);
 		Expression2 exp2 = new Expression2(this.ast);
-		exp2.setSourceRange(exp.getStartPosition(), exp.getStartPosition() + exp.getLength() - 1);
+		exp2.setSourceRange(exp.getStartPosition(), exp.getLength());
 		exp2.elements().addAll(elts);
 
 		return exp2;
@@ -4755,6 +4755,7 @@ class ASTConverter {
 		List<ASTNode> elts = getTypeElements(type);
 		resetElementsParent(elts);
 		type2.elements().addAll(elts);
+		type2.setSourceRange(type.getStartPosition(), type.getLength());
 
 		return type2;
 	}
@@ -4800,6 +4801,7 @@ class ASTConverter {
 		List<ASTNode> elts = getTypeElements(currentType);
 		resetElementsParent(elts);
 		type2.elements().addAll(elts);
+		type2.setSourceRange(currentType.getStartPosition(), currentType.getLength());
 
 		return type2;
 	}
@@ -4839,6 +4841,8 @@ class ASTConverter {
 		List<ASTNode> elts = getTypeElements(simpleType);
 		resetElementsParent(elts);
 		type2.elements().addAll(elts);
+		type2.setSourceRange(simpleType.getStartPosition(), simpleType.getLength());
+
 		return type2;
 	}
 
