@@ -49,7 +49,7 @@ public class ParameterizedType extends Type {
 	 * @since 3.39
 	 */
 	public static final ChildListPropertyDescriptor ELEMENTS_PROPERTY =
-			new ChildListPropertyDescriptor(ArrayAccess.class, "elements", ASTNode.class, NO_CYCLE_RISK); //$NON-NLS-1$
+			new ChildListPropertyDescriptor(ParameterizedType.class, "elements", ASTNode.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * The "typeArguments" structural property of this node type (element type: {@link Type}).
