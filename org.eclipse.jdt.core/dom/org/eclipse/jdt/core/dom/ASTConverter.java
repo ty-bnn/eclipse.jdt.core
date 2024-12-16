@@ -2832,7 +2832,7 @@ class ASTConverter {
 
 		Operator op = new Operator(this.ast);
 		PosAndLength pl = getOperatorPosAndLength(expression.lhs.sourceEnd + 1, expression.sourceEnd);
-		op.setSourceRange(pl.pos, pl.pos + pl.length - 1);
+		op.setSourceRange(pl.pos, pl.length);
 
 		switch (expression.operator) {
 			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.PLUS :
@@ -2915,7 +2915,7 @@ class ASTConverter {
 
 		Operator op = new Operator(this.ast);
 		PosAndLength pl = getOperatorPosAndLength(expression.sourceStart, expression.sourceEnd);
-		op.setSourceRange(pl.pos, pl.pos + pl.length - 1);
+		op.setSourceRange(pl.pos, pl.length);
 
 		switch (expression.operator) {
 			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.PLUS :
@@ -3665,7 +3665,7 @@ class ASTConverter {
 
 		Operator op = new Operator(this.ast);
 		PosAndLength pl = getOperatorPosAndLength(expression.sourceStart, expression.sourceEnd);
-		op.setSourceRange(pl.pos, pl.pos + pl.length - 1);
+		op.setSourceRange(pl.pos, pl.length);
 
 		switch ((expression.bits & org.eclipse.jdt.internal.compiler.ast.ASTNode.OperatorMASK) >> org.eclipse.jdt.internal.compiler.ast.ASTNode.OperatorSHIFT) {
 			case org.eclipse.jdt.internal.compiler.ast.OperatorIds.PLUS :
