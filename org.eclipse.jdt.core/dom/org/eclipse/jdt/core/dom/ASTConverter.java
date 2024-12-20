@@ -2585,7 +2585,9 @@ class ASTConverter {
 					if (this.resolveBindings) {
 						recordNodes(expri, arguments[i]);
 					}
-					methodInvocation.arguments().add(expri);
+					var elts = expri.elements();
+					resetElementsParent(elts);
+					methodInvocation.argumentElements().addAll(elts);
 				}
 			}
 			Expression qualifier = null;
@@ -2934,7 +2936,7 @@ class ASTConverter {
 		final ClassInstanceCreation classInstanceCreation = new ClassInstanceCreation(this.ast);
 		if (allocation.enclosingInstance != null) {
 			Expression2 exp = convert(allocation.enclosingInstance);
-			resetElementsParent(classInstanceCreation.elements());
+			resetElementsParent(exp.elements());
 			classInstanceCreation.elements().addAll(exp.elements());
 		}
 		switch(this.ast.apiLevel) {

@@ -68,6 +68,12 @@ public class MethodInvocation extends Expression {
 		new ChildListPropertyDescriptor(MethodInvocation.class, "arguments", Expression.class, CYCLE_RISK); //$NON-NLS-1$
 
 	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ARGUMENT_ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(MethodInvocation.class, "argumentElements", ASTNode.class, NO_CYCLE_RISK); //$NON-NLS-1$
+
+	/**
 	 * A list of property descriptors (element type:
 	 * {@link StructuralPropertyDescriptor}),
 	 * or null if uninitialized.
@@ -97,6 +103,7 @@ public class MethodInvocation extends Expression {
 		addProperty(TYPE_ARGUMENTS_PROPERTY, properyList);
 		addProperty(NAME_PROPERTY, properyList);
 		addProperty(ARGUMENTS_PROPERTY, properyList);
+		addProperty(ARGUMENT_ELEMENTS_PROPERTY, properyList);
 		PROPERTY_DESCRIPTORS_3_0 = reapPropertyList(properyList);
 	}
 
@@ -147,9 +154,15 @@ public class MethodInvocation extends Expression {
 	/**
 	 * The list of argument expressions (element type:
 	 * {@link Expression}). Defaults to an empty list.
+	 * @deprecated
 	 */
 	private final ASTNode.NodeList arguments =
 		new ASTNode.NodeList(ARGUMENTS_PROPERTY);
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList argumentElements = new ASTNode.NodeList(ARGUMENT_ELEMENTS_PROPERTY);
 
 	/**
 	 * Creates a new AST node for a method invocation expression owned by the
@@ -195,6 +208,9 @@ public class MethodInvocation extends Expression {
 		if (property == TYPE_ARGUMENTS_PROPERTY) {
 			return typeArguments();
 		}
+		if (property == ARGUMENT_ELEMENTS_PROPERTY) {
+			return argumentElements();
+		}
 		// allow default implementation to flag the error
 		return super.internalGetChildListProperty(property);
 	}
@@ -213,7 +229,7 @@ public class MethodInvocation extends Expression {
 		if (this.ast.apiLevel >= AST.JLS3_INTERNAL) {
 			result.typeArguments().addAll(ASTNode.copySubtrees(target, typeArguments()));
 		}
-		result.arguments().addAll(ASTNode.copySubtrees(target, arguments()));
+		result.argumentElements().addAll(ASTNode.copySubtrees(target, argumentElements()));
 		return result;
 	}
 
@@ -233,7 +249,7 @@ public class MethodInvocation extends Expression {
 				acceptChildren(visitor, this.typeArguments);
 			}
 			acceptChild(visitor, getName());
-			acceptChildren(visitor, this.arguments);
+			acceptChildren(visitor, this.argumentElements);
 		}
 		visitor.endVisit(this);
 	}
@@ -354,9 +370,17 @@ public class MethodInvocation extends Expression {
 	 *
 	 * @return the live list of argument expressions
 	 *    (element type: {@link Expression})
+	 * @deprecated
 	 */
 	public List arguments() {
 		return this.arguments;
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public List argumentElements() {
+		return this.argumentElements;
 	}
 
 	/**
@@ -388,7 +412,7 @@ public class MethodInvocation extends Expression {
 			+ (this.elements == null ? 0 : this.elements.listSize())
 			+ (this.typeArguments == null ? 0 : this.typeArguments.listSize())
 			+ (this.methodName == null ? 0 : getName().treeSize())
-			+ (this.arguments == null ? 0 : this.arguments.listSize());
+			+ (this.arguments == null ? 0 : this.argumentElements.listSize());
 	}
 }
 
