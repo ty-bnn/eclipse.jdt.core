@@ -1704,11 +1704,19 @@ class ASTConverter {
 		if (this.resolveBindings) {
 			recordNodes(conditionalExpression, expression);
 		}
-		conditionalExpression.setExpression(convert(expression.condition));
-		conditionalExpression.setThenExpression(convert(expression.valueIfTrue));
-		Expression2 elseExpression = convert(expression.valueIfFalse);
-		conditionalExpression.setElseExpression(elseExpression);
-		conditionalExpression.setSourceRange(expression.sourceStart, elseExpression.getStartPosition() + elseExpression.getLength() - expression.sourceStart);
+		Expression2 exp2 = convert(expression.condition);
+		var elts = exp2.elements();
+		resetElementsParent(elts);
+		conditionalExpression.expressionElements().addAll(elts);
+		exp2 = convert(expression.valueIfTrue);
+		elts = exp2.elements();
+		resetElementsParent(elts);
+		conditionalExpression.thenElements().addAll(elts);
+		exp2 = convert(expression.valueIfFalse);
+		elts = exp2.elements();
+		resetElementsParent(elts);
+		conditionalExpression.elseElements().addAll(elts);
+		conditionalExpression.setSourceRange(expression.sourceStart, expression.sourceEnd - expression.sourceStart + 1);
 		return conditionalExpression;
 	}
 

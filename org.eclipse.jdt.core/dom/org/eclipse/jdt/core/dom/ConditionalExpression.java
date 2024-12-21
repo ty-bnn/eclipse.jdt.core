@@ -34,23 +34,44 @@ public class ConditionalExpression extends Expression {
 	/**
 	 * The "expression" structural property of this node type (child type: {@link Expression}).
 	 * @since 3.0
+	 * @deprecated
 	 */
 	public static final ChildPropertyDescriptor EXPRESSION_PROPERTY =
 		new ChildPropertyDescriptor(ConditionalExpression.class, "expression", Expression.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
 
 	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor EXPRESSION_ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(ConditionalExpression.class, "expressionElements", ASTNode.class, NO_CYCLE_RISK); //$NON-NLS-1$
+
+	/**
 	 * The "thenExpression" structural property of this node type (child type: {@link Expression}).
 	 * @since 3.0
+	 * @deprecated
 	 */
 	public static final ChildPropertyDescriptor THEN_EXPRESSION_PROPERTY =
 		new ChildPropertyDescriptor(ConditionalExpression.class, "thenExpression", Expression.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
 
 	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor THEN_ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(ConditionalExpression.class, "thenElements", ASTNode.class, NO_CYCLE_RISK); //$NON-NLS-1$
+
+	/**
 	 * The "elseExpression" structural property of this node type (child type: {@link Expression}).
 	 * @since 3.0
+	 * @deprecated
 	 */
 	public static final ChildPropertyDescriptor ELSE_EXPRESSION_PROPERTY =
 		new ChildPropertyDescriptor(ConditionalExpression.class, "elseExpression", Expression.class, MANDATORY, CYCLE_RISK); //$NON-NLS-1$
+
+	/**
+	 * @since 3.39
+	 */
+	public static final ChildListPropertyDescriptor ELSE_ELEMENTS_PROPERTY =
+			new ChildListPropertyDescriptor(ConditionalExpression.class, "elseElements", ASTNode.class, NO_CYCLE_RISK); //$NON-NLS-1$
 
 	/**
 	 * A list of property descriptors (element type:
@@ -62,9 +83,9 @@ public class ConditionalExpression extends Expression {
 	static {
 		List properyList = new ArrayList(4);
 		createPropertyList(ConditionalExpression.class, properyList);
-		addProperty(EXPRESSION_PROPERTY, properyList);
-		addProperty(THEN_EXPRESSION_PROPERTY, properyList);
-		addProperty(ELSE_EXPRESSION_PROPERTY, properyList);
+		addProperty(EXPRESSION_ELEMENTS_PROPERTY, properyList);
+		addProperty(THEN_ELEMENTS_PROPERTY, properyList);
+		addProperty(ELSE_ELEMENTS_PROPERTY, properyList);
 		PROPERTY_DESCRIPTORS = reapPropertyList(properyList);
 	}
 
@@ -86,20 +107,38 @@ public class ConditionalExpression extends Expression {
 	/**
 	 * The condition expression; lazily initialized; defaults to an unspecified,
 	 * but legal, expression.
+	 * @deprecated
 	 */
 	private volatile Expression conditionExpression;
 
 	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList expressionElements = new ASTNode.NodeList(EXPRESSION_ELEMENTS_PROPERTY);
+
+	/**
 	 * The "then" expression; lazily initialized; defaults to an unspecified,
 	 * but legal, expression.
+	 * @deprecated
 	 */
 	private volatile Expression thenExpression;
 
 	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList thenElements = new ASTNode.NodeList(EXPRESSION_ELEMENTS_PROPERTY);
+
+	/**
 	 * The "else" expression; lazily initialized; defaults to an unspecified,
 	 * but legal, expression.
+	 * @deprecated
 	 */
 	private volatile Expression elseExpression;
+
+	/**
+	 * @since 3.39
+	 */
+	private ASTNode.NodeList elseElements = new ASTNode.NodeList(EXPRESSION_ELEMENTS_PROPERTY);
 
 	/**
 	 * Creates a new unparented conditional expression node owned by the given
@@ -151,6 +190,21 @@ public class ConditionalExpression extends Expression {
 	}
 
 	@Override
+	final List internalGetChildListProperty(ChildListPropertyDescriptor property) {
+		if (property == EXPRESSION_ELEMENTS_PROPERTY) {
+			return expressionElements();
+		}
+		if (property == THEN_ELEMENTS_PROPERTY) {
+			return thenElements();
+		}
+		if (property == ELSE_ELEMENTS_PROPERTY) {
+			return elseElements();
+		}
+		// allow default implementation to flag the error
+		return super.internalGetChildListProperty(property);
+	}
+
+	@Override
 	final int getNodeType0() {
 		return CONDITIONAL_EXPRESSION;
 	}
@@ -159,11 +213,9 @@ public class ConditionalExpression extends Expression {
 	ASTNode clone0(AST target) {
 		ConditionalExpression result = new ConditionalExpression(target);
 		result.setSourceRange(getStartPosition(), getLength());
-		result.setExpression((Expression) getExpression().clone(target));
-		result.setThenExpression(
-			(Expression) getThenExpression().clone(target));
-		result.setElseExpression(
-			(Expression) getElseExpression().clone(target));
+		result.expressionElements().addAll(ASTNode.copySubtrees(target, expressionElements()));
+		result.thenElements().addAll(ASTNode.copySubtrees(target, thenElements()));
+		result.elseElements().addAll(ASTNode.copySubtrees(target, elseElements()));
 		return result;
 	}
 
@@ -178,9 +230,9 @@ public class ConditionalExpression extends Expression {
 		boolean visitChildren = visitor.visit(this);
 		if (visitChildren) {
 			// visit children in normal left to right reading order
-			acceptChild(visitor, getExpression());
-			acceptChild(visitor, getThenExpression());
-			acceptChild(visitor, getElseExpression());
+			acceptChildren(visitor, this.expressionElements);
+			acceptChildren(visitor, this.thenElements);
+			acceptChildren(visitor, this.elseElements);
 		}
 		visitor.endVisit(this);
 	}
@@ -189,6 +241,7 @@ public class ConditionalExpression extends Expression {
 	 * Returns the condition of this conditional expression.
 	 *
 	 * @return the condition node
+	 * @deprecated
 	 */
 	public Expression getExpression() {
 		if (this.conditionExpression == null) {
@@ -213,6 +266,7 @@ public class ConditionalExpression extends Expression {
 	 * <li>the node already has a parent</li>
 	 * <li>a cycle in would be created</li>
 	 * </ul>
+	 * @deprecated
 	 */
 	public void setExpression(Expression expression) {
 		if (expression == null) {
@@ -225,9 +279,17 @@ public class ConditionalExpression extends Expression {
 	}
 
 	/**
+	 * @since 3.39
+	 */
+	public List expressionElements() {
+		return this.expressionElements;
+	}
+
+	/**
 	 * Returns the "then" part of this conditional expression.
 	 *
 	 * @return the "then" expression node
+	 * @deprecated
 	 */
 	public Expression getThenExpression() {
 		if (this.thenExpression == null) {
@@ -252,6 +314,7 @@ public class ConditionalExpression extends Expression {
 	 * <li>the node already has a parent</li>
 	 * <li>a cycle in would be created</li>
 	 * </ul>
+	 * @deprecated
 	 */
 	public void setThenExpression(Expression expression) {
 		if (expression == null) {
@@ -264,9 +327,17 @@ public class ConditionalExpression extends Expression {
 	}
 
 	/**
+	 * @since 3.39
+	 */
+	public List thenElements() {
+		return this.thenElements;
+	}
+
+	/**
 	 * Returns the "else" part of this conditional expression.
 	 *
 	 * @return the "else" expression node
+	 * @deprecated
 	 */
 	public Expression getElseExpression() {
 		if (this.elseExpression == null) {
@@ -291,6 +362,7 @@ public class ConditionalExpression extends Expression {
 	 * <li>the node already has a parent</li>
 	 * <li>a cycle in would be created</li>
 	 * </ul>
+	 * @deprecated
 	 */
 	public void setElseExpression(Expression expression) {
 		if (expression == null) {
@@ -300,6 +372,13 @@ public class ConditionalExpression extends Expression {
 		preReplaceChild(oldChild, expression, ELSE_EXPRESSION_PROPERTY);
 		this.elseExpression = expression;
 		postReplaceChild(oldChild, expression, ELSE_EXPRESSION_PROPERTY);
+	}
+
+	/**
+	 * @since 3.39
+	 */
+	public List elseElements() {
+		return this.elseElements;
 	}
 
 	@Override
@@ -312,8 +391,8 @@ public class ConditionalExpression extends Expression {
 	int treeSize() {
 		return
 			memSize()
-			+ (this.conditionExpression == null ? 0 : getExpression().treeSize())
-			+ (this.thenExpression == null ? 0 : getThenExpression().treeSize())
-			+ (this.elseExpression == null ? 0 : getElseExpression().treeSize());
+			+ (this.expressionElements == null ? 0 : this.expressionElements.listSize())
+			+ (this.thenElements == null ? 0 : this.thenElements.listSize())
+			+ (this.elseElements == null ? 0 : this.elseElements.listSize());
 	}
 }
