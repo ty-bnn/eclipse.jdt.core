@@ -412,7 +412,7 @@ public class MethodInvocation extends Expression {
 			+ (this.elements == null ? 0 : this.elements.listSize())
 			+ (this.typeArguments == null ? 0 : this.typeArguments.listSize())
 			+ (this.methodName == null ? 0 : getName().treeSize())
-			+ (this.arguments == null ? 0 : this.argumentElements.listSize());
+			+ (this.argumentElements == null ? 0 : this.argumentElements.listSize());
 	}
 }
 
